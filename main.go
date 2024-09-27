@@ -24,7 +24,6 @@ import (
 var (
 	c           = make(chan os.Signal, 1)
 	clientID    = "default"
-	dbDirectory = "./sqlite"
 	idleMatcher = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 )
 
@@ -32,6 +31,7 @@ type Options struct {
 	checkInterval time.Duration
 	idleAfter     time.Duration
 	cmd           string
+	dbDirectory   string
 	dropCreate    bool
 }
 
@@ -42,6 +42,7 @@ func main() {
 	flag.DurationVar(&opts.checkInterval, "interval", 2*time.Second, "Interval to check for idle time")
 	flag.DurationVar(&opts.idleAfter, "idle", 10*time.Second, "Max time before client is considered idle")
 	flag.StringVar(&opts.cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
+	flag.StringVar(&opts.dbDirectory, "db", "./sqlite", "SQLite directory")
 	flag.BoolVar(&opts.dropCreate, "drop-create", false, "Drop and re-create db schema (CAUTION!)")
 	if len(os.Args) > 1 && os.Args[1] == "help" {
 		flag.PrintDefaults()
@@ -63,7 +64,7 @@ func main() {
 		trackerWG.Done()
 	}()
 	sig := <-c
-	info("🛑 Received Signal %v\n", sig)
+	info("🛑 Received Signal %v", sig)
 	ctxCancel()
 	trackerWG.Wait()
 }
@@ -127,7 +128,7 @@ func currentIdleTime(ctx context.Context, cmd string) (int64, error) {
 
 // initDB initializes SQLite DB in local filesystem
 func initDB(opts *Options) (*sql.DB, error) {
-	fn := filepath.Join(dbDirectory, "db")
+	fn := filepath.Join(opts.dbDirectory, "db")
 
 	db, err := sql.Open("sqlite", fn)
 	if err != nil {
