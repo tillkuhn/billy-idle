@@ -21,10 +21,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const (
-	recreateSchema = true // CAUTION !!!!
-)
-
 var (
 	c           = make(chan os.Signal, 1)
 	clientID    = "default"
@@ -36,6 +32,7 @@ type Options struct {
 	checkInterval time.Duration
 	idleAfter     time.Duration
 	cmd           string
+	dropCreate    bool
 }
 
 // main runs the tracker
@@ -45,6 +42,7 @@ func main() {
 	flag.DurationVar(&opts.checkInterval, "interval", 2*time.Second, "Interval to check for idle time")
 	flag.DurationVar(&opts.idleAfter, "idle", 10*time.Second, "Max time before client is considered idle")
 	flag.StringVar(&opts.cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
+	flag.BoolVar(&opts.dropCreate, "drop-create", false, "Drop and re-create db schema (CAUTION!)")
 	if len(os.Args) > 1 && os.Args[1] == "help" {
 		flag.PrintDefaults()
 		return
@@ -54,7 +52,7 @@ func main() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
-	db, err := initDB()
+	db, err := initDB(&opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,7 +126,7 @@ func currentIdleTime(ctx context.Context, cmd string) (int64, error) {
 }
 
 // initDB initializes SQLite DB in local filesystem
-func initDB() (*sql.DB, error) {
+func initDB(opts *Options) (*sql.DB, error) {
 	fn := filepath.Join(dbDirectory, "db")
 
 	db, err := sql.Open("sqlite", fn)
@@ -143,7 +141,7 @@ func initDB() (*sql.DB, error) {
 
 	// drop table if exists t; insert into t values(42), (314);
 	var dropStmt string
-	if recreateSchema {
+	if opts.dropCreate {
 		dropStmt = "DROP TABLE IF EXISTS track;\n"
 	}
 	if _, err = db.Exec(dropStmt + `
