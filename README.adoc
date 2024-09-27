@@ -2,7 +2,14 @@ image:https://github.com/tillkuhn/billy-idle/actions/workflows/go.yml/badge.svg[
 
 == 💤 Billy Idle - Lightweight MacOS (In)activity Tracker
 
-Simple busy / idle time tracker inspired by the ancient article https://www.dssw.co.uk/blog/2015-01-21-inactivity-and-idle-time/[Inactivity and Idle Time on OS X]. Background:  OS X has a timer called HIDIdleTime that tracks the last time you interacted with the computer.
+Simple busy / idle time tracker inspired by the ancient article https://www.dssw.co.uk/blog/2015-01-21-inactivity-and-idle-time/[Inactivity and Idle Time on OS X].
+
+
+== Background
+
+According to the article, OS X has a timer called *HIDIdleTime* that tracks the last time you interacted with the computer, e.g. moved the mouse, typed a key, or interacted with the computer.
+
+*billy-idle* simply queries this value periodically using the `ioreg` utility that ships with MacOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
 
 == Run
 
@@ -18,6 +25,9 @@ $ go run main.go
 ^C
 2024/09/27 19:47:46 [BigMac] 🐝 Stopped at Fri, 27 Sep 2024 19:48:32 CEST
 ----
+
+NOTE: Binary packages for MacOS amd64 and arm64 are coming soon, the same goes for docker images on ghcr.io
+
 
 == Database Support
 
