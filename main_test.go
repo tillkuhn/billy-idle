@@ -22,14 +22,14 @@ func Test_Tracker(t *testing.T) {
 			t.Log(err.Error())
 		}
 	}(dir)
-	dbDirectory = dir // overwrite with tempdir
-	db, err := initDB()
-	assert.NoError(t, err)
 	opts := Options{
 		checkInterval: 100 * time.Millisecond,
 		idleAfter:     100 * time.Millisecond,
+		dbDirectory:   dir, // overwrite with tempdir
 		cmd:           "testdata/ioreg-mock.sh",
 	}
+	db, err := initDB(&opts)
+	assert.NoError(t, err)
 	go func() { tracker(ctx, db, &opts) }()
 	time.Sleep(1 * time.Second)
 	c <- os.Interrupt
