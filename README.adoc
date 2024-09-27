@@ -1,3 +1,5 @@
+image:https://github.com/tillkuhn/billy-idle/actions/workflows/go.yml/badge.svg[ci-build]
+
 = 💤 Billy Idle - Lightweight MacOS (In)activity Tracker
 
 Inspired by the article https://www.dssw.co.uk/blog/2015-01-21-inactivity-and-idle-time/[Inactivity and Idle Time on OS X]. Background:  OS X has a timer called HIDIdleTime that tracks the last time you interacted with the computer.
