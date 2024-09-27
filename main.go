@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,29 +12,45 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
+
+	"github.com/tillkuhn/billy-idle/internal/version"
 
 	_ "modernc.org/sqlite"
 )
 
 const (
-	dateLayout     = time.RFC1123
 	recreateSchema = true // CAUTION !!!!
 )
 
 var (
-	c             = make(chan os.Signal, 1)
-	cmd           = "ioreg"
-	clientID      = "default"
-	dbDirectory   = "./sqlite"
-	checkInterval = 1 * time.Second
-	idleAfter     = 3 * time.Second
-	idleMatcher   = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
+	c           = make(chan os.Signal, 1)
+	clientID    = "default"
+	dbDirectory = "./sqlite"
+	idleMatcher = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 )
+
+type Options struct {
+	checkInterval time.Duration
+	idleAfter     time.Duration
+	cmd           string
+}
 
 // main runs the tracker
 func main() {
+	var trackerWG sync.WaitGroup
+	var opts Options
+	flag.DurationVar(&opts.checkInterval, "interval", 2*time.Second, "Interval to check for idle time")
+	flag.DurationVar(&opts.idleAfter, "idle", 10*time.Second, "Max time before client is considered idle")
+	flag.StringVar(&opts.cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
+	if len(os.Args) > 1 && os.Args[1] == "help" {
+		flag.PrintDefaults()
+		return
+	}
+	flag.Parse()
+
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -42,44 +59,59 @@ func main() {
 		log.Fatal(err)
 	}
 	defer func(db *sql.DB) { _ = db.Close() }(db)
+	trackerWG.Add(1)
 	go func() {
-		idle := false
-		lastEvent := time.Now()
+		tracker(ctx, db, &opts)
+		trackerWG.Done()
+	}()
+	sig := <-c
+	info("🛑 Received Signal %v\n", sig)
+	ctxCancel()
+	trackerWG.Wait()
+}
 
-		id, _ := insertTrack(ctx, db, fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", idleAfter.Seconds()))
-		for {
-			idleMillis, err := currentIdleTime(ctx)
+func tracker(ctx context.Context, db *sql.DB, opts *Options) {
+	idle := false
+	lastEvent := time.Now()
+
+	info("🎬 %s tracker started version=%s commit=%s", filepath.Base(os.Args[0]), version.Version, version.GitCommit)
+	id, _ := insertTrack(ctx, db, fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", opts.idleAfter.Seconds()))
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			// make sure latest status is written to db, must use a fresh context
+			if err := completeTrack(context.Background(), db, id); err != nil {
+				info(err.Error())
+			}
+			break loop
+		default:
+			idleMillis, err := currentIdleTime(ctx, opts.cmd)
 			switch {
 			case err != nil:
-				log.Println(err.Error())
-			case !idle && idleMillis >= idleAfter.Milliseconds():
+				info(err.Error())
+			case !idle && idleMillis >= opts.idleAfter.Milliseconds():
 				idle = true
-				if err := completeTrack(ctx, db, id); err != nil {
-					log.Println(err.Error())
-				}
-				log.Printf("[%s] 💤 Switched to idle mode after %v of busy time, completing record #%d\n",
-					clientID, time.Since(lastEvent).Round(time.Second), id)
+				info("💤 Entering idle mode after %v of busy time, completing record #%d", time.Since(lastEvent).Round(time.Second), id)
+				_ = completeTrack(ctx, db, id)
 				lastEvent = time.Now()
-			case idle && idleMillis < idleAfter.Milliseconds():
+			case idle && idleMillis < opts.idleAfter.Milliseconds():
 				idle = false
-				id, err = insertTrack(ctx, db, fmt.Sprintf("🐝 Resuming busy mode after %v of idle time, creating new record", time.Since(lastEvent).Round(time.Second)))
-				if err != nil {
-					log.Println(err.Error())
-				}
+				msg := fmt.Sprintf("🐝 Resuming busy mode after %v of idle time, creating new record", time.Since(lastEvent).Round(time.Second))
+				id, _ = insertTrack(ctx, db, msg)
+				info(msg + " #" + strconv.Itoa(id))
 				lastEvent = time.Now()
 			}
-			time.Sleep(checkInterval)
+			time.Sleep(opts.checkInterval)
 		}
-	}()
-	<-c
-	ctxCancel()
-	log.Printf("🐝 Stopped at %v\n", time.Now().Format(dateLayout))
+	}
+	info("🛑 tracker stopped")
 }
 
 // currentIdleTime gets the current idle time in milliseconds from the external ioreg command
-func currentIdleTime(ctx context.Context) (int64, error) {
-	cmd := exec.CommandContext(ctx, cmd, "-c", "IOHIDSystem")
-	stdout, err := cmd.Output()
+func currentIdleTime(ctx context.Context, cmd string) (int64, error) {
+	cmdExec := exec.CommandContext(ctx, cmd, "-c", "IOHIDSystem")
+	stdout, err := cmdExec.Output()
 	if err != nil {
 		return 0, err
 	}
@@ -131,7 +163,6 @@ CREATE TABLE IF NOT EXISTS track (
 
 // insertTrack inserts a new tracking records
 func insertTrack(ctx context.Context, db *sql.DB, msg string) (int, error) {
-	log.Printf("[%s] %s", clientID, msg)
 	statement, err := db.PrepareContext(ctx, `INSERT INTO track(message,client) VALUES (?,?) RETURNING id;`)
 	if err != nil {
 		return 0, err
@@ -140,7 +171,7 @@ func insertTrack(ctx context.Context, db *sql.DB, msg string) (int, error) {
 	// Golang SQL insert row and get returning ID example: https://gist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
 	err = statement.QueryRowContext(ctx, msg, clientID).Scan(&id)
 	if err != nil {
-		log.Println(err.Error())
+		info(err.Error())
 	}
 	return id, err
 }
@@ -151,7 +182,13 @@ func completeTrack(ctx context.Context, db *sql.DB, id int) error {
 	if err != nil {
 		return err
 	}
-	// Golang SQL insert row and get returning ID example: https://gist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
 	_, err = statement.ExecContext(ctx, id)
+	if err != nil {
+		info(err.Error())
+	}
 	return err
+}
+
+func info(format string, v ...any) {
+	log.Printf("["+clientID+"] "+format+"\n", v...)
 }

@@ -1,6 +1,6 @@
 image:https://github.com/tillkuhn/billy-idle/actions/workflows/go.yml/badge.svg[ci-build]
 
-== 💤 Billy Idle - Lightweight MacOS (In)activity Tracker
+== 💤 Billy Idle - Lightweight macOS (In)activity Tracker
 
 Simple busy / idle time tracker inspired by the ancient article https://www.dssw.co.uk/blog/2015-01-21-inactivity-and-idle-time/[Inactivity and Idle Time on OS X].
 
@@ -9,7 +9,7 @@ Simple busy / idle time tracker inspired by the ancient article https://www.dssw
 
 According to the article, OS X has a timer called *HIDIdleTime* that tracks the last time you interacted with the computer, e.g. moved the mouse, typed a key, or interacted with the computer.
 
-*billy-idle* simply queries this value periodically using the `ioreg` utility that ships with MacOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
+*billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
 
 == Run
 
@@ -17,23 +17,56 @@ According to the article, OS X has a timer called *HIDIdleTime* that tracks the 
 ----
 $ go run main.go
 
-2024/09/27 19:44:41 [BigMac] 🐝 Start tracking in busy mode, idle time kicks in after 3s
-2024/09/27 19:44:44 [BigMac] 💤 Switched to idle mode after 3s of busy time, completing record #1
-2024/09/27 19:45:23 [BigMac] 🐝 Resuming busy mode after 39s of idle time, creating new record
-2024/09/27 19:46:47 [BigMac] 💤 Switched to idle mode after 1m24s of busy time, completing record #2
-2024/09/27 19:47:44 [BigMac] 🐝 Resuming busy mode after 57s of idle time, creating new record
-^C
-2024/09/27 19:47:46 [BigMac] 🐝 Stopped at Fri, 27 Sep 2024 19:48:32 CEST
+2024/09/28 00:43:52 [BigMac] 🎬 billy-idle tracker started version=latest commit=e95d72f
+2024/09/28 00:44:09 [BigMac] 💤 Entering idle mode after 17s of busy time, completing record #1
+2024/09/28 00:44:13 [BigMac] 🐝 Resuming busy mode after 4s of idle time, creating new record #2
+2024/09/28 00:44:27 [BigMac] 💤 Entering idle mode after 14s of busy time, completing record #2
+2024/09/28 00:45:25 [BigMac] 🐝 Resuming busy mode after 58s of idle time, creating new record #3
+2024/09/28 00:45:37 [BigMac] 💤 Entering idle mode after 12s of busy time, completing record #3
+2024/09/28 00:45:45 [BigMac] 🐝 Resuming busy mode after 8s of idle time, creating new record #4
+2024/09/28 00:45:48 [BigMac] 🛑 Received Signal interrupt
+2024/09/28 00:45:49 [BigMac] 🛑 tracker stopped
 ----
 
-NOTE: Binary packages for MacOS amd64 and arm64 are coming soon, the same goes for docker images on ghcr.io
+NOTE: Binary packages for macOS amd64 and arm64 are coming soon, the same goes for docker images on ghcr.io
 
+== CLI Arguments
+
+[source,shell]
+----
+$ billy-idle help
+  -cmd string
+    	Command to retrieve HIDIdleTime (default "ioreg")
+  -idle duration
+    	Max time before client is considered idle (default 10s)
+  -interval duration
+    	Interval to check for idle time (default 2s)
+----
 
 == Database Support
 
 *Billy Idle* currently only support a local https://gitlab.com/cznic/sqlite[sqlite] database, more precisely `modernc.org/sqlite` which is a cgo-free port of SQLite. But it shouldn't be a big deal to add support for a remote https://www.postgresql.org[PostgreSQL] Database.
 
-image:sqlite.png[]
+image:docs/sqlite.png[]
+
+== Development
+
+[source,shell]
+----
+$ make
+Usage: make <OPTIONS> ... <TARGETS>
+
+Available targets are:
+
+build                build all targets
+clean                Clean output directory
+help                 Shows the help
+lint                 Lint go code
+minor                Create Minor Release
+run                  Run tracker
+test                 Test go code
+update               Update all go dependencies
+----
 
 == 🎸 Credits
 
