@@ -71,20 +71,19 @@ func main() {
 }
 
 func tracker(ctx context.Context, db *sql.DB, opts *Options) {
-	idle := false
+	var done, idle bool
 	lastEvent := time.Now()
 
 	info("🎬 %s tracker started version=%s commit=%s", filepath.Base(os.Args[0]), version.Version, version.GitCommit)
 	id, _ := insertTrack(ctx, db, fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", opts.idleAfter.Seconds()))
-loop:
-	for {
+	for !done {
 		select {
 		case <-ctx.Done():
 			// make sure latest status is written to db, must use a fresh context
 			if err := completeTrack(context.Background(), db, id); err != nil {
 				info(err.Error())
 			}
-			break loop
+			done = true
 		default:
 			idleMillis, err := currentIdleTime(ctx, opts.cmd)
 			switch {
