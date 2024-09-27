@@ -21,6 +21,7 @@ var (
 	idleAfter     = 5 * time.Second
 	idleMatcher   = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 	c             = make(chan os.Signal, 1)
+	cmd           = "ioreg"
 )
 
 // main runs the tracker
@@ -31,7 +32,7 @@ func main() {
 	fmt.Printf("🐝 Starting in busy mode at %v\n", time.Now().Format(dateLayout))
 	go func() {
 		for {
-			cmd := exec.Command("ioreg", "-c", "IOHIDSystem")
+			cmd := exec.Command(cmd, "-c", "IOHIDSystem")
 			stdout, err := cmd.Output()
 			if err != nil {
 				log.Fatal(err.Error())
@@ -44,7 +45,7 @@ func main() {
 					idleMillis = int64(i / 1000000)
 				}
 			} else {
-				log.Fatal("Can't parse HIDIdleTime from output")
+				log.Fatal("Can't parse HIDIdleTime from output" + string(stdout))
 			}
 
 			if !idle && idleMillis >= idleAfter.Milliseconds() {
