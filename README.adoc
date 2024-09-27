@@ -71,8 +71,9 @@ update               Update all go dependencies
 == 🎸 Credits
 
 image:https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Billy_idol_ill_artlibre_jnl.png/640px-Billy_idol_ill_artlibre_jnl.png[]
+
 Source: https://commons.wikimedia.org/wiki/File:Billy_idol_ill_artlibre_jnl.png[Wikimedia Commons], terms of the https://en.wikipedia.org/wiki/en:Free_Art_License[Free Art License] apply.
 
 == Contribution
 
-If you want to contribute to *rubin* please have a look at the [contribution guidelines](./CONTRIBUTING.md).
+If you want to contribute to *rubin* please have a look at the xref:CONTRIBUTING.md[]
