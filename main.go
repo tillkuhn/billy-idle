@@ -29,21 +29,23 @@ var (
 
 type Options struct {
 	checkInterval time.Duration
-	idleAfter     time.Duration
 	cmd           string
 	dbDirectory   string
 	dropCreate    bool
+	env           string
+	idleAfter     time.Duration
 }
 
 // main runs the tracker
 func main() {
 	var trackerWG sync.WaitGroup
 	var opts Options
+	flag.StringVar(&opts.cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
+	flag.StringVar(&opts.dbDirectory, "db-dir", "./sqlite", "SQLite directory")
+	flag.BoolVar(&opts.dropCreate, "drop-create", false, "Drop and re-create db schema (CAUTION!)")
+	flag.StringVar(&opts.env, "env", "default", "Environment")
 	flag.DurationVar(&opts.checkInterval, "interval", 2*time.Second, "Interval to check for idle time")
 	flag.DurationVar(&opts.idleAfter, "idle", 10*time.Second, "Max time before client is considered idle")
-	flag.StringVar(&opts.cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
-	flag.StringVar(&opts.dbDirectory, "db", "./sqlite", "SQLite directory")
-	flag.BoolVar(&opts.dropCreate, "drop-create", false, "Drop and re-create db schema (CAUTION!)")
 	if len(os.Args) > 1 && os.Args[1] == "help" {
 		flag.PrintDefaults()
 		return
@@ -128,11 +130,11 @@ func currentIdleTime(ctx context.Context, cmd string) (int64, error) {
 
 // initDB initializes SQLite DB in local filesystem
 func initDB(opts *Options) (*sql.DB, error) {
-	fn := filepath.Join(opts.dbDirectory, "db")
-
-	db, err := sql.Open("sqlite", fn)
+	dbFile := filepath.Join(opts.dbDirectory, "db_"+opts.env)
+	info("Using Database %s", dbFile)
+	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot open db %s: %w", dbFile, err)
 	}
 
 	clientID, err = os.Hostname()
@@ -186,6 +188,9 @@ func completeTrack(ctx context.Context, db *sql.DB, id int) error {
 	}
 	return err
 }
+
+// Input for select:
+// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 
 func info(format string, v ...any) {
 	log.Printf("["+clientID+"] "+format+"\n", v...)
