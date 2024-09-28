@@ -32,10 +32,12 @@ func main() {
 		return
 	}
 	flag.Parse()
+
 	t := tracker.New(&opts)
 	go func() {
 		t.Track(ctx)
 	}()
+
 	sig := <-sigChan
 	log.Printf("🛑 Received Signal %v", sig)
 	ctxCancel()
