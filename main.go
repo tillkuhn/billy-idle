@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/tillkuhn/billy-idle/internal/version"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -16,6 +18,9 @@ import (
 
 // main runs the tracker
 func main() {
+	log.Printf("🎬 %s started version=%s commit=%s pid=%d",
+		filepath.Base(os.Args[0]), version.Version, version.GitCommit, os.Getpid())
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	ctx, ctxCancel := context.WithCancel(context.Background())

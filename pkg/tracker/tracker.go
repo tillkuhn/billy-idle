@@ -3,6 +3,7 @@ package tracker
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -12,9 +13,12 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/tillkuhn/billy-idle/internal/version"
 )
+
+// Package embed provides access to Files embedded in the running Go program.
+//
+//go:embed init-db.sql
+var initSql string
 
 var idleMatcher = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 
@@ -44,7 +48,6 @@ func (t *Tracker) Track(ctx context.Context) {
 	var done, idle bool
 	lastEvent := time.Now()
 
-	info("🎬 %s tracker started version=%s commit=%s", filepath.Base(os.Args[0]), version.Version, version.GitCommit)
 	id, _ := t.insertTrack(ctx, fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", t.opts.IdleAfter.Seconds()))
 	for !done {
 		select {
@@ -72,11 +75,10 @@ func (t *Tracker) Track(ctx context.Context) {
 				info(msg + " #" + strconv.Itoa(id))
 				lastEvent = time.Now()
 			}
+			// time.Sleep doesn't react to context cancellation, but context.WithTimeout does
 			sleep, cancel := context.WithTimeout(ctx, t.opts.CheckInterval)
-			log.Printf("Sleeping...")
 			<-sleep.Done()
 			cancel()
-			// time.Sleep(t.opts.CheckInterval)
 		}
 	}
 	info("🛑 tracker stopped")
@@ -106,14 +108,7 @@ func initDB(opts *Options) (*sql.DB, error) {
 	if opts.DropCreate {
 		dropStmt = "DROP TABLE IF EXISTS track;\n"
 	}
-	if _, err = db.Exec(dropStmt + `
-CREATE TABLE IF NOT EXISTS track (
-		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"busy_start" DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')), 
-		"busy_end" DATETIME,
-		"client" TEXT,
-		"message" TEXT)
-`); err != nil {
+	if _, err = db.Exec(dropStmt + initSql); err != nil {
 		return nil, err
 	}
 
