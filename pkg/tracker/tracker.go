@@ -50,6 +50,7 @@ func (t *Tracker) Track(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			// make sure latest status is written to db, must use a fresh context
+			info("🛑 context cancelled, committing pending busy record %d", id)
 			if err := t.completeTrack(context.Background(), id); err != nil {
 				info(err.Error())
 			}
@@ -71,7 +72,11 @@ func (t *Tracker) Track(ctx context.Context) {
 				info(msg + " #" + strconv.Itoa(id))
 				lastEvent = time.Now()
 			}
-			time.Sleep(t.opts.CheckInterval)
+			sleep, cancel := context.WithTimeout(ctx, t.opts.CheckInterval)
+			log.Printf("Sleeping...")
+			<-sleep.Done()
+			cancel()
+			// time.Sleep(t.opts.CheckInterval)
 		}
 	}
 	info("🛑 tracker stopped")

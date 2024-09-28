@@ -53,7 +53,7 @@ clean: ## Clean output directory
 
 .PHONY: run
 run: ## Run app in tracker mode
-	go run main.go -env dev -idle 10s -interval 2s -drop-create true
+	go run main.go -env dev -idle 10s -interval 5s -drop-create true
 
 .PHONY: run-help
 run-help: ## Run app in help mode
