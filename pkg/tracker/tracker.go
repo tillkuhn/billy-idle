@@ -18,7 +18,7 @@ import (
 // Package embed provides access to Files embedded in the running Go program.
 //
 //go:embed init-db.sql
-var initSql string
+var initSQL string
 
 var idleMatcher = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 
@@ -48,7 +48,9 @@ func (t *Tracker) Track(ctx context.Context) {
 	var done, idle bool
 	lastEvent := time.Now()
 
-	id, _ := t.insertTrack(ctx, fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", t.opts.IdleAfter.Seconds()))
+	msg := fmt.Sprintf("🐝 Start tracking in busy mode, idle time kicks in after %vs", t.opts.IdleAfter.Seconds())
+	log.Println(msg)
+	id, _ := t.insertTrack(ctx, msg)
 	for !done {
 		select {
 		case <-ctx.Done():
@@ -92,7 +94,7 @@ func (t *Tracker) WaitClose() {
 // initDB initializes SQLite DB in local filesystem
 func initDB(opts *Options) (*sql.DB, error) {
 	dbFile := filepath.Join(opts.DbDirectory, "db_"+opts.Env)
-	info("Using Database %s", dbFile)
+	info("🥫 Using Database %s", dbFile)
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open db %s: %w", dbFile, err)
@@ -108,7 +110,7 @@ func initDB(opts *Options) (*sql.DB, error) {
 	if opts.DropCreate {
 		dropStmt = "DROP TABLE IF EXISTS track;\n"
 	}
-	if _, err = db.Exec(dropStmt + initSql); err != nil {
+	if _, err = db.Exec(dropStmt + initSQL); err != nil {
 		return nil, err
 	}
 

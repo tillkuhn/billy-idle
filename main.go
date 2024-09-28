@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/tillkuhn/billy-idle/internal/version"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/tillkuhn/billy-idle/internal/version"
 
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
