@@ -1,5 +1,6 @@
 ARCH = $(shell uname -m)
-BINARY = billy-idle
+BINARY ?= billy
+LAUNCHD_LABEL ?= com.github.tillkuhn.billy-idle
 PROJECT_PKG = $(shell grep -e ^module go.mod|cut -d' '  -f2|xargs)
 # git info for ldflags inspired by https://github.com/oras-project/oras/blob/main/Makefile
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
@@ -34,13 +35,25 @@ run-mac: build-mac ## run mac build
 build: build-mac ## build all targets
 	@find bin -type f
 
+.PHONY: service
+install: ## Install as launchd managed service
+	mkdir -p $(HOME)/.billy-idle
+	cp bin/darwin/$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
+	launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	cat agent.plist |envsubst '$$HOME' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	launchctl load -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	launchctl list $(LAUNCHD_LABEL)
+	launchctl start $(LAUNCHD_LABEL)
+	sleep 1
+	tail $(HOME)/.billy-idle/agent.log
+
 .PHONY: clean
 clean: ## Clean output directory
 	rm -rf bin/
 
 .PHONY: run
 run: ## Run app in tracker mode
-	@go run main.go tracker
+	go run main.go -env dev -idle 10s -interval 2s -drop-create true
 
 .PHONY: run-help
 run-help: ## Run app in help mode

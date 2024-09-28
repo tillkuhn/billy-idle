@@ -11,7 +11,7 @@ According to the article, OS X has a timer called *HIDIdleTime* that tracks the 
 
 *billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
 
-== Run
+== Run form source
 
 [source,shell]
 ----
@@ -29,6 +29,23 @@ $ go run main.go
 ----
 
 NOTE: Binary packages for macOS amd64 and arm64 are coming soon, the same goes for docker images on ghcr.io
+
+== Install as launchd managed service (experimental)
+
+Plist files in ~/Library/LaunchAgents/ are run at login with the id of the logged in user.
+See https://stackoverflow.com/a/13372744/4292075[SO: launchctl and .plist file],
+https://ieftimov.com/posts/create-manage-macos-launchd-agents-golang/[Create and manage MacOS LaunchAgents using Go]
+and  https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html#//apple_ref/doc/uid/10000172i-SW7-BCIEDDBJ[Launching Custom Daemons Using launchd]
+
+[source,shell]
+----
+$ cp com.github.tillkuhn.billy-idle.plist ~/Library/LaunchAgents
+$ launchctl load ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
+$ launchctl start com.github.tillkuhn.billy-idle
+
+# in case of Load failed: 5: Input/output error, try this first
+$ launchctl unload ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
+----
 
 == CLI Arguments
 

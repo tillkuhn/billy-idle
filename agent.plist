@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+   <key>Label</key><string>com.github.tillkuhn.billy-idle</string>
+   <key>ProgramArguments</key>
+   <array>
+       <string>$HOME/bin/billy</string>
+       <string>-idle</string>
+       <string>5m</string>
+       <string>-interval</string>
+       <string>30s</string>
+       <string>-db-dir</string>
+       <string>$HOME/.billy-idle</string>
+    </array>
+    <key>StandardOutPath</key><string>$HOME/.billy-idle/agent.log</string>
+    <key>StandardErrorPath</key><string>$HOME/.billy-idle/agent.err</string>
+    <key>Debug</key><true/>
+   <key>RunAtLoad</key><true/>
+</dict>
+</plist>
