@@ -51,13 +51,21 @@ $ launchctl unload ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
 
 [source,shell]
 ----
-$ billy-idle help
+$ billy help
+
   -cmd string
     	Command to retrieve HIDIdleTime (default "ioreg")
+  -db-dir string
+    	SQLite directory (default "./sqlite")
+  -drop-create
+    	Drop and re-create db schema (CAUTION!)
+  -env string
+    	Environment (default "default")
   -idle duration
     	Max time before client is considered idle (default 10s)
   -interval duration
     	Interval to check for idle time (default 2s)
+
 ----
 
 == Database Support
