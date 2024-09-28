@@ -36,7 +36,7 @@ build: build-mac ## build all targets
 	@find bin -type f
 
 .PHONY: service
-install: ## Install as launchd managed service
+install: build-mac ## Install as launchd managed service
 	mkdir -p $(HOME)/.billy-idle
 	cp bin/darwin/$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
 	launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
