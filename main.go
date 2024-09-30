@@ -12,17 +12,26 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/tillkuhn/billy-idle/internal/version"
-
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
 	_ "modernc.org/sqlite"
 )
 
+// useful variables to pass with ldflags during build, for example
+// e.g. go run -ldflags="-w -s -X 'main.version=$(shell git describe --tags --abbrev=0)' -X 'main.commit=$(shell git rev-parse --short HEAD)'"
+// goreleaser default: '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser'
+// see also https://goreleaser.com/cookbooks/using-main.version/
+var (
+	version = "latest"
+	date    = "now"
+	// commit    = ""
+	// builtBy   = "go"
+)
+
 // main entry point to run sub commands
 func main() {
 	app := filepath.Base(os.Args[0])
-	log.Printf("🎬 %s started version=%s pid=%d go=%s arch=%s", app, version.Version, os.Getpid(), runtime.Version(), runtime.GOARCH)
+	log.Printf("🎬 %s started version=%s built=%s pid=%d go=%s arch=%s", app, version, date, os.Getpid(), runtime.Version(), runtime.GOARCH)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
