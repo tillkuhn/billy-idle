@@ -13,6 +13,10 @@ ifneq ($(GIT_TAG),)
 	LDFLAGS += -X $(PROJECT_PKG)/internal/version.BuildMetadata=$(VERSION)
 endif
 
+#-------------------
+# Common Targets
+#-------------------
+
 .PHONY: help
 help: ## Shows the help
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -35,25 +39,13 @@ run-mac: build-mac ## run mac build
 build: build-mac ## build all targets
 	@find bin -type f
 
-.PHONY: service
-install: build-mac ## Install as launchd managed service
-	mkdir -p $(HOME)/.billy-idle
-	cp bin/darwin/$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
-	launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
-	cat agent.plist |envsubst '$$HOME' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
-	launchctl load -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
-	launchctl list $(LAUNCHD_LABEL)
-	launchctl start $(LAUNCHD_LABEL)
-	sleep 1
-	tail $(HOME)/.billy-idle/agent.log
-
 .PHONY: clean
 clean: ## Clean output directory
 	rm -rf bin/
 
 .PHONY: run
 run: ## Run app in tracker mode
-	go run main.go -env dev -idle 10s -interval 5s -drop-create true
+	go run main.go track -env dev -idle 10s -interval 5s -debug -drop-create
 
 .PHONY: run-help
 run-help: ## Run app in help mode
@@ -75,9 +67,38 @@ lint: ## Lint go code
 	@go fmt ./...
 	@golangci-lint run --fix
 
+.PHONY: tidy
+tidy: ## Add missing and remove unused modules
+	go mod tidy
+
 PHONE: update
 update: ## Update all go dependencies
 	@go get -u all
+
+#-------------------
+# Custom Targets
+#-------------------
+
+.PHONY: install
+install: build-mac ## Install as launchd managed service
+	@mkdir -p $(HOME)/.billy-idle
+	@if launchctl list $(LAUNCHD_LABEL) 2>/dev/null|grep '"Program"'; then \
+  		echo "$(LAUNCHD_LABEL) is loaded, trigger unload"; \
+		launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist; \
+	fi
+	cp bin/darwin/$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
+	cat agent.plist |envsubst '$$HOME' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	launchctl load -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	launchctl list $(LAUNCHD_LABEL) | grep '"PID"'
+	@sleep 1
+	@ps -ef |grep -v grep |grep $(HOME)/bin/billy
+	@tail $(HOME)/.billy-idle/agent.log
+
+
+.PHONY: logs
+logs: ## Show agent logs
+	@tail -120 $(HOME)/.billy-idle/agent.log
+
 
 .PHONY: minor
 minor: ## Create Minor Release

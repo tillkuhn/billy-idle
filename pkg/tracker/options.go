@@ -7,7 +7,8 @@ type Options struct {
 	ClientID      string
 	Cmd           string
 	DbDirectory   string
+	Debug         bool
 	DropCreate    bool
 	Env           string
-	IdleAfter     time.Duration
+	IdleTolerance time.Duration
 }

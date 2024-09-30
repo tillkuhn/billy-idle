@@ -46,6 +46,9 @@ linters-settings:
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
+    - text: "G404:" # Ignore weak random number generator lint. We do not need strong randomness here.
+      linters:
+        - gosec
     - path: _test\.go
       linters:
         - gochecknoglobals
@@ -57,3 +60,5 @@ issues:
       linters: [gochecknoglobals]
     - path: main.go
       linters: [gochecknoglobals,mnd]
+    - path: pkg/tracker/tracker.go
+      linters: [mnd]
