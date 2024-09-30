@@ -6,7 +6,7 @@ LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 PROJECT_PKG = $(shell grep -e ^module go.mod|cut -d' '  -f2|xargs)
 # git info for ldflags inspired by https://github.com/oras-project/oras/blob/main/Makefile
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
-GIT_TAG     = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
+GIT_TAG     = $(shell git describe --tags --abbrev=0 2>/dev/null)
 #GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 LDFLAGS = -w
 # LDFLAGS += -X $(PROJECT_PKG)/internal/version.GitCommit=${GIT_COMMIT}
@@ -54,7 +54,7 @@ release: ## run goreleaser in snapshot mode
 
 .PHONY: clean
 clean: ## Clean output directory
-	rm -rf bin/
+	rm -rf dist/
 
 .PHONY: run
 run: ## Run app in tracker mode
