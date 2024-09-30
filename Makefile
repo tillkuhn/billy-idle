@@ -1,16 +1,24 @@
+APP_NAME=billy-idle
 ARCH = $(shell uname -m)
+OSNAME = $(shell uname -o)
 BINARY ?= billy
-LAUNCHD_LABEL ?= com.github.tillkuhn.billy-idle
+LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 PROJECT_PKG = $(shell grep -e ^module go.mod|cut -d' '  -f2|xargs)
 # git info for ldflags inspired by https://github.com/oras-project/oras/blob/main/Makefile
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 GIT_TAG     = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
-GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
+#GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 LDFLAGS = -w
-LDFLAGS += -X $(PROJECT_PKG)/internal/version.GitTreeState=${GIT_DIRTY}
-LDFLAGS += -X $(PROJECT_PKG)/internal/version.GitCommit=${GIT_COMMIT}
+# LDFLAGS += -X $(PROJECT_PKG)/internal/version.GitCommit=${GIT_COMMIT}
+LDFLAGS += -X main.date=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 ifneq ($(GIT_TAG),)
-	LDFLAGS += -X $(PROJECT_PKG)/internal/version.BuildMetadata=$(VERSION)
+	LDFLAGS += -X main.version=$(GIT_TAG)
+endif
+ifeq ($(OSNAME),Darwin)
+  OS = darwin
+else
+  OS = linux
 endif
 
 #-------------------
@@ -27,17 +35,22 @@ help: ## Shows the help
         awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' | sort
 	@echo ''
 
+# default goreleaser  dist/billy-idle_darwin_arm64/billy
 .PHONY: build-mac
 build-mac: ## build for mac current arch
 	GOARCH=$(ARCH) CGO_ENABLED=0 GOOS=darwin go build -v --ldflags="$(LDFLAGS)" \
-		-o bin/darwin/$(ARCH)/$(BINARY) $(CLI_PKG)
+		-o dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
 
 run-mac: build-mac ## run mac build
-	bin/darwin/$(ARCH)/$(BINARY)
+	dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
 
 .PHONY: build
 build: build-mac ## build all targets
-	@find bin -type f
+	@find dist -type f
+
+.PHONY: release
+release: ## run goreleaser in snapshot mode
+	goreleaser build --clean --snapshot
 
 .PHONY: clean
 clean: ## Clean output directory
