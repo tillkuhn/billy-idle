@@ -6,15 +6,18 @@
    <key>ProgramArguments</key>
    <array>
        <string>$HOME/bin/billy</string>
-       <string>-idle</string>
-       <string>5m</string>
-       <string>-interval</string>
-       <string>30s</string>
+       <string>track</string>
        <string>-db-dir</string>
        <string>$HOME/.billy-idle</string>
+       <string>-idle</string>
+       <string>2m</string>
+       <string>-interval</string>
+       <string>10s</string>
+       <!-- optional -->
+       <string>-debug</string>
     </array>
     <key>StandardOutPath</key><string>$HOME/.billy-idle/agent.log</string>
-    <key>StandardErrorPath</key><string>$HOME/.billy-idle/agent.err</string>
+    <key>StandardErrorPath</key><string>$HOME/.billy-idle/agent.log</string>
     <key>Debug</key><true/>
    <key>RunAtLoad</key><true/>
 </dict>

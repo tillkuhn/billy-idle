@@ -26,7 +26,7 @@ func Test_Tracker(t *testing.T) {
 	}(dir)
 	opts := &tracker.Options{
 		CheckInterval: 100 * time.Millisecond,
-		IdleAfter:     100 * time.Millisecond,
+		IdleTolerance: 100 * time.Millisecond,
 		DbDirectory:   dir, // overwrite with tempdir
 		Cmd:           "testdata/ioreg-mock.sh",
 	}
