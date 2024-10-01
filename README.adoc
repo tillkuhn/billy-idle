@@ -11,21 +11,41 @@ According to the article, OS X has a timer called *HIDIdleTime* that tracks the 
 
 *billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
 
+== Example Report
+
+----
+------------------------------------ DAILY BILLY IDLE REPORT ------------------------------
+Tuesday 13:10:03: Spent 2m30s Drinking a Bock Celebrator Doppelbock
+Tuesday 13:54:12: Spent 40m52s Building app Horsehad in Cayenne
+Tuesday 14:07:48: Spent 2s Driving a Highlander Hybrid 2wd Passenger car compact to Austin
+Tuesday 14:10:23: Spent 1s Drinking a Bock HopSlam Ale
+Tuesday 14:10:35: Spent 2s Driving a Sl600 Passenger car light to Winston-Salem
+Tuesday 14:11:21: Spent 5s Drinking a Porter Racer 5 India Pale Ale, Bear Republic Bre
+Tuesday 14:11:32: Spent 3s Drinking a Belgian And French Ale Pliny The Elder
+Tuesday 14:12:48: Spent 1s Drinking a Dark Lager Founders Breakfast Stout
+Tuesday 14:35:04: Spent 1m6s Building app Thingdoes in SASL
+Tuesday 14:36:10: Spent 23s Drinking a Porter Orval Trappist Ale
+Tuesday 14:36:33: Spent 1h51m16s Eating a Viskos praline sauce with Blueberry
+Tuesday 16:28:49: Spent 44m40s Driving a Charger Sport utility vehicle to St. Petersburg
+------------------------------------------------------------------------------------
+Total time spent: 3h21m0s (net) / 3h51m0s (with 30m0s kitKat break)
+------------------------------------------------------------------------------------
+----
+
 == Run form source
 
 [source,shell]
 ----
 $ go run main.go
 
-2024/09/28 00:43:52 [BigMac] 🎬 billy-idle tracker started version=latest commit=e95d72f
-2024/09/28 00:44:09 [BigMac] 💤 Entering idle mode after 17s of busy time, completing record #1
-2024/09/28 00:44:13 [BigMac] 🐝 Resuming busy mode after 4s of idle time, creating new record #2
-2024/09/28 00:44:27 [BigMac] 💤 Entering idle mode after 14s of busy time, completing record #2
-2024/09/28 00:45:25 [BigMac] 🐝 Resuming busy mode after 58s of idle time, creating new record #3
-2024/09/28 00:45:37 [BigMac] 💤 Entering idle mode after 12s of busy time, completing record #3
-2024/09/28 00:45:45 [BigMac] 🐝 Resuming busy mode after 8s of idle time, creating new record #4
-2024/09/28 00:45:48 [BigMac] 🛑 Received Signal interrupt
-2024/09/28 00:45:49 [BigMac] 🛑 tracker stopped
+2024/10/01 17:13:29 🎬 billy started version=v0.0.2 built=2024-10-01T15:13:28Z pid=37477 go=go1.23.1 arch=arm64
+2024/10/01 17:13:29 🥫 Open database file=~/.billy-idle/default/db.sqlite3 sqlite=3.46.0
+2024/10/01 17:13:29 👀 Tracker started in idle mode with auto-idle>=2m0s interval=10s
+2024/10/01 17:13:29 🐝 Enter busy mode after 0s idle time rec=#13
+2024/10/01 17:15:33 💤 Checkpoint idleTime=11s state=idle lastSwitch=0s ago lastCheck=5s ago
+2024/10/01 17:15:38 🛑 Received signal interrupt, initiate shutdown
+2024/10/01 17:15:38 🛑 Tracker stopped after 0s busy time rec=#10
+2024/10/01 17:15:38 🥫 Close database in ~/.billy-idle/dev
 ----
 
 NOTE: Binary packages for macOS amd64 and arm64 are coming soon, the same goes for docker images on ghcr.io
@@ -51,21 +71,22 @@ $ launchctl unload ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
 
 [source,shell]
 ----
-$ billy help
+$ billy track -help
 
+  -app-dir string
+    	App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>
   -cmd string
     	Command to retrieve HIDIdleTime (default "ioreg")
-  -db-dir string
-    	SQLite directory (default "./sqlite")
+  -debug
+    	Debug checkpoints
   -drop-create
-    	Drop and re-create db schema (CAUTION!)
+    	Drop and re-create db schema on startup
   -env string
     	Environment (default "default")
   -idle duration
-    	Max time before client is considered idle (default 10s)
+    	Max tolerated idle time before client enters idle state (default 10s)
   -interval duration
     	Interval to check for idle time (default 2s)
-
 ----
 
 == Database Support
@@ -84,12 +105,21 @@ Usage: make <OPTIONS> ... <TARGETS>
 Available targets are:
 
 build                build all targets
+build-mac            build for mac current arch using default goreleaser target path
 clean                Clean output directory
 help                 Shows the help
+install              Install as launchd managed service
 lint                 Lint go code
+logs                 Show agent logs
 minor                Create Minor Release
-run                  Run tracker
-test                 Test go code
+release              run goreleaser in snapshot mode
+report               Show report for default db
+report-dev           Show report for dev db
+run                  Run app in tracker mode, add -drop-create to recreate db
+run-help             Run app in help mode
+run-mac              run mac build
+test                 Run tests with coverage, implies lint
+tidy                 Add missing and remove unused modules
 update               Update all go dependencies
 ----
 
