@@ -37,7 +37,7 @@ help: ## Shows the help
 
 # default goreleaser  dist/billy-idle_darwin_arm64/billy
 .PHONY: build-mac
-build-mac: ## build for mac current arch
+build-mac: ## build for mac current arch using default goreleaser target path
 	GOARCH=$(ARCH) CGO_ENABLED=0 GOOS=darwin go build -v --ldflags="$(LDFLAGS)" \
 		-o dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
 
@@ -56,29 +56,18 @@ release: ## run goreleaser in snapshot mode
 clean: ## Clean output directory
 	rm -rf dist/
 
-.PHONY: run
-run: ## Run app in tracker mode
-	go run main.go track -env dev -idle 10s -interval 5s -debug -drop-create
-
-.PHONY: run-help
-run-help: ## Run app in help mode
-	@go run main.go help
-
-.PHONY: test
-test: ## Runs all tests  (with colorized output support if gotest is installed)
-	@if hash gotest 2>/dev/null; then \
-	  gotest -v -coverpkg=./... -coverprofile=coverage.out ./...; \
-  	else go test -v -coverpkg=./... -coverprofile=coverage.out ./...; fi
-
-#@go tool cover -func coverage.out | grep "total:"
-.PHONY: coverage
-coverage: test ## Displays coverage per func on cli
-	go tool cover -func=coverage.out
-
-.PHONY: lint
 lint: ## Lint go code
 	@go fmt ./...
 	@golangci-lint run --fix
+
+.PHONY: test
+test: lint ## Run tests with coverage, implies lint
+	@if hash gotest 2>/dev/null; then \
+	  gotest -v -coverpkg=./... -coverprofile=coverage.out ./...; \
+	else go test -v -coverpkg=./... -coverprofile=coverage.out ./...; fi
+	@go tool cover -func coverage.out | grep "total:"
+	go tool cover -html=coverage.out -o coverage.html
+	@echo For coverage report open coverage.html
 
 .PHONY: tidy
 tidy: ## Add missing and remove unused modules
@@ -92,6 +81,23 @@ update: ## Update all go dependencies
 # Custom Targets
 #-------------------
 
+.PHONY: run
+run: ## Run app in tracker mode, add -drop-create to recreate db
+	go run main.go track -env dev -idle 10s -interval 5s -debug
+
+.PHONY: report-dev
+report-dev: ## Show report for dev db
+	go run main.go report -env dev -debug
+
+.PHONY: report
+report: ## Show report for default db
+	go run main.go report -debug
+
+
+.PHONY: run-help
+run-help: ## Run app in help mode
+	@go run main.go help
+
 .PHONY: install
 install: build-mac ## Install as launchd managed service
 	@mkdir -p $(HOME)/.billy-idle
@@ -99,18 +105,18 @@ install: build-mac ## Install as launchd managed service
   		echo "$(LAUNCHD_LABEL) is loaded, trigger unload"; \
 		launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist; \
 	fi
-	cp bin/darwin/$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
+	cp dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
 	cat agent.plist |envsubst '$$HOME' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
 	launchctl load -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
 	launchctl list $(LAUNCHD_LABEL) | grep '"PID"'
 	@sleep 1
 	@ps -ef |grep -v grep |grep $(HOME)/bin/billy
-	@tail $(HOME)/.billy-idle/agent.log
+	@tail $(HOME)/.billy-idle/default/agent.log
 
 
 .PHONY: logs
 logs: ## Show agent logs
-	@tail -120 $(HOME)/.billy-idle/agent.log
+	@tail -120 $(HOME)/.billy-idle/default/agent.log
 
 
 .PHONY: minor

@@ -1,4 +1,4 @@
-name: Publish to ghcr.io
+name: Release Go Binaries
 
 on:
   push:

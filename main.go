@@ -40,7 +40,7 @@ func main() {
 	var opts tracker.Options
 	trackCmd := flag.NewFlagSet("track", flag.ExitOnError)
 	trackCmd.StringVar(&opts.Cmd, "cmd", "ioreg", "Command to retrieve HIDIdleTime")
-	trackCmd.StringVar(&opts.DbDirectory, "db-dir", "./sqlite", "SQLite directory")
+	trackCmd.StringVar(&opts.AppDir, "app-dir", "", "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
 	trackCmd.BoolVar(&opts.Debug, "debug", false, "Debug checkpoints")
 	trackCmd.BoolVar(&opts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
 	trackCmd.StringVar(&opts.Env, "env", "default", "Environment")
@@ -50,22 +50,40 @@ func main() {
 		os.Args = append(os.Args, "help")
 	}
 	switch os.Args[1] {
-	case "track":
-		_ = trackCmd.Parse(os.Args[2:])
-		if *trackCmd.Bool("h", false, "Show help") {
-			trackCmd.PrintDefaults()
-			break
+	case "track", "report":
+		if err := trackCmd.Parse(os.Args[2:]); err != nil {
+			log.Fatal(err) // -h and -help will print usage implicitly
+		}
+		if opts.AppDir == "" {
+			opts.AppDir = defaultAppDir(opts.Env)
 		}
 		t := tracker.New(&opts)
+		// todo: make a real case out of this mess :-)
+		if os.Args[1] == "report" {
+			_ = t.Report(ctx, os.Stdout)
+			break
+		}
 		go func() {
 			t.Track(ctx)
 		}()
 		sig := <-sigChan
-		log.Printf("🛑 Received Signal %v", sig)
+		log.Printf("🛑 Received signal %v, initiate shutdown", sig)
 		ctxCancel()
 		t.WaitClose()
 	default:
 		fmt.Printf("Usage: %s [command]\n\nAvailable Commands (more coming soon):\n  track    Starts the tracker\n\n", app)
 		fmt.Printf("Use \"%s [command] -h\" for more information about a command.\n", app)
 	}
+}
+
+func defaultAppDir(env string) string {
+	home, err := os.UserHomeDir() // $HOME on *nix
+	if err != nil {
+		log.Fatal(err)
+	}
+	dir := filepath.Join(home, ".billy-idle", env)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
+	return dir
 }

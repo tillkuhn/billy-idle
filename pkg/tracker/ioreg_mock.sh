@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# returns a partial ioreg response with HIDIdleTime = 257791791 nanoseconds
 cat <<EOF
     | | |   "IOProviderClass" = "IOResources"
     | | |   "IOReportLegendPublic" = Yes

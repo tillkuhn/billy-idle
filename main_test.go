@@ -27,8 +27,8 @@ func Test_Tracker(t *testing.T) {
 	opts := &tracker.Options{
 		CheckInterval: 100 * time.Millisecond,
 		IdleTolerance: 100 * time.Millisecond,
-		DbDirectory:   dir, // overwrite with tempdir
-		Cmd:           "testdata/ioreg-mock.sh",
+		AppDir:        dir, // overwrite with tempdir
+		Cmd:           "pkg/tracker/ioreg_mock.sh",
 	}
 	tr := tracker.New(opts)
 	assert.NoError(t, err)
@@ -39,6 +39,10 @@ func Test_Tracker(t *testing.T) {
 }
 
 func Test_Help(_ *testing.T) {
-	os.Args = []string{"hase", "help"}
+	os.Args = []string{"app", "help"}
 	main()
+}
+
+func Test_DefaultAppDir(t *testing.T) {
+	assert.NotEmpty(t, defaultAppDir("test"))
 }
