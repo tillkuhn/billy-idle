@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Options to configure the Tracker
 type Options struct {
 	CheckInterval time.Duration
 	ClientID      string
@@ -16,6 +17,7 @@ type Options struct {
 	IdleTolerance time.Duration
 }
 
+// TrackRecord representation of a database record
 type TrackRecord struct {
 	ID        int       `db:"id"`
 	BusyStart time.Time `db:"busy_start"`
@@ -33,6 +35,7 @@ func (t TrackRecord) Duration() time.Duration {
 	return t.BusyEnd.Sub(t.BusyStart)
 }
 
+// IdleState represents the current state
 type IdleState struct {
 	id         int
 	idle       bool
@@ -61,15 +64,18 @@ func (i *IdleState) String() string {
 	return fmt.Sprintf("state=%s lastSwitch=%v ago lastCheck=%v ago", i.State(), i.TimeSinceLastSwitch(), i.TimeSinceLastCheck())
 }
 
+// SwitchState switch between idly and busy
 func (i *IdleState) SwitchState() {
 	i.idle = !i.idle
 	i.lastSwitch = time.Now()
 }
 
+// Busy convenience method for ! idle
 func (i *IdleState) Busy() bool {
 	return !i.idle
 }
 
+// TimeSinceLastSwitch returns the duration since the last state switch
 func (i *IdleState) TimeSinceLastSwitch() time.Duration {
 	// see https://stackoverflow.com/a/50061223/4292075 discussion how to avoid issues after OS sleep
 	// "Try stripping monotonic clock from one of your Time variables using now = now.Round(0) before calling Sub.
@@ -77,6 +83,7 @@ func (i *IdleState) TimeSinceLastSwitch() time.Duration {
 	return time.Since(i.lastSwitch.Round(0)).Round(time.Second)
 }
 
+// TimeSinceLastCheck returns the duration since the last idle checkpoint
 func (i *IdleState) TimeSinceLastCheck() time.Duration {
 	if i.lastCheck.IsZero() {
 		return 0
@@ -84,14 +91,17 @@ func (i *IdleState) TimeSinceLastCheck() time.Duration {
 	return time.Since(i.lastCheck.Round(0)).Round(time.Second)
 }
 
+// ExceedsIdleTolerance returns true if the idle time is greater than the tolerated duration
 func (i *IdleState) ExceedsIdleTolerance(idleMillis int64, idleTolerance time.Duration) bool {
 	return i.Busy() && idleMillis >= idleTolerance.Milliseconds()
 }
 
+// ExceedsCheckTolerance returns true if the duration since the last checkpoint is greater than the tolerated duration
 func (i *IdleState) ExceedsCheckTolerance(idleTolerance time.Duration) bool {
 	return i.Busy() && i.TimeSinceLastCheck() >= idleTolerance
 }
 
-func (i *IdleState) ApplicableForBusy(idleMillis int64, idleTolerance time.Duration) bool {
+// DueForBusy returns true if a switch to busy mode us due
+func (i *IdleState) DueForBusy(idleMillis int64, idleTolerance time.Duration) bool {
 	return i.idle && idleMillis < idleTolerance.Milliseconds()
 }
