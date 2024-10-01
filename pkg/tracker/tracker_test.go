@@ -32,30 +32,56 @@ func Test_State(t *testing.T) {
 	assert.NotEmpty(t, a.String())
 }
 
+func Test_Insert(t *testing.T) {
+	tr, mock := DBMock(t)
+	sql1 := "INSERT INTO track(.*)"
+	mock.ExpectPrepare(sql1)
+	// Error row: https://github.com/DATA-DOG/go-sqlmock/blob/master/rows_test.go#L53
+	mock.ExpectQuery(sql1).WithArgs("nur der RWE", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(mock.NewRows([]string{"id"}).
+			AddRow("42"))
+	mock.ExpectClose()
+	id, err := tr.newRecord(context.Background(), "nur der RWE")
+	assert.NoError(t, err)
+	assert.Equal(t, 42, id)
+}
+
+func Test_UPDATE(t *testing.T) {
+	tr, mock := DBMock(t)
+	sql1 := "UPDATE track(.*)"
+	mock.ExpectPrepare(sql1)
+	// Error row: https://github.com/DATA-DOG/go-sqlmock/blob/master/rows_test.go#L53
+	mock.ExpectExec(sql1).WithArgs(sqlmock.AnyArg(), "nur der RWE", 42).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectClose()
+	err := tr.completeRecord(context.Background(), 42, "nur der RWE")
+	assert.NoError(t, err)
+}
+
 func Test_Report(t *testing.T) {
-	mockDB, sqlMock := DBMock(t)
-	tr := Tracker{
-		opts: &Options{},
-		db:   mockDB,
-		wg:   sync.WaitGroup{},
-	}
+	tr, mock := DBMock(t)
+
 	start := time.Now()
-	sqlMock.ExpectQuery("SELECT (.*)").
+	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
-			sqlMock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
+			mock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
 				AddRow("1", start, start.Add(5*time.Minute), "Having a DejaVu").
 				AddRow("2", start, start.Add(3*time.Minute), "Debugging Code"))
-	sqlMock.ExpectClose()
+	mock.ExpectClose()
 	var output bytes.Buffer
 	assert.NoError(t, tr.Report(context.Background(), &output))
 	assert.Contains(t, output.String(), "DejaVu")
 }
 
-// DBMock returns instances of mockDB (compatible with sql.DB) and sql mock:
+// DBMock returns instances of mockDB (compatible with sql.DB)
 // https://github.com/jmoiron/sqlx/issues/204#issuecomment-187641445
-func DBMock(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock) {
+func DBMock(t *testing.T) (*Tracker, sqlmock.Sqlmock) {
 	mockDB, sqlMock, err := sqlmock.New()
 	assert.NoError(t, err)
 	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
-	return sqlxDB, sqlMock
+	tr := &Tracker{
+		opts: &Options{},
+		db:   sqlxDB,
+		wg:   sync.WaitGroup{},
+	}
+	return tr, sqlMock
 }

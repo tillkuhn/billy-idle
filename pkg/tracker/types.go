@@ -26,7 +26,7 @@ type TrackRecord struct {
 }
 
 func (t TrackRecord) String() string {
-	return fmt.Sprintf("%s %s: Spent %v %s", t.BusyStart.Weekday(), t.BusyStart.Format("15:04:05"), t.Duration(), t.Task)
+	return fmt.Sprintf("%s %s Spent %v %s", t.BusyStart.Weekday(), t.BusyStart.Format("15:04:05"), t.Duration(), t.Task)
 }
 
 func (t TrackRecord) Duration() time.Duration {
