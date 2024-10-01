@@ -23,6 +23,7 @@ import (
 //go:embed init-db.sql
 var initSQL string
 
+// Tracker tracks idle state periodically and persist state changes in DB
 type Tracker struct {
 	opts *Options
 	db   *sqlx.DB
@@ -78,7 +79,7 @@ func (t *Tracker) Track(ctx context.Context) {
 				// We have to date back the end of the Busy period to the last known active check
 				// Oh, you have to love Go's time and duration handling: https://stackoverflow.com/a/26285835/4292075
 				_ = t.completeRecordWithTime(ctx, ist.id, msg, time.Now().Add(ist.TimeSinceLastCheck()*-1))
-			case ist.ApplicableForBusy(idleMillis, t.opts.IdleTolerance):
+			case ist.DueForBusy(idleMillis, t.opts.IdleTolerance):
 				ist.SwitchState()
 				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", ist.Icon(), ist.TimeSinceLastSwitch())
 				ist.id, _ = t.newRecord(ctx, msg)
@@ -177,7 +178,7 @@ func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string
 // Report experimental report for time tracking apps
 func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	var records []TrackRecord
-	// query := `SELECT * FROM track WHERE project_id=$1 AND branch IN ('main','master') ORDER BY id DESC LIMIT 1`
+	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	query := `SELECT * FROM track WHERE busy_end IS NOT NULL and busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 100`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
@@ -198,9 +199,6 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	_, _ = fmt.Fprintln(w, strings.Repeat("-", 84))
 	return nil
 }
-
-// Input for select func
-// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 
 // randomTask returns a task with random creative content :-)
 func randomTask() string {
