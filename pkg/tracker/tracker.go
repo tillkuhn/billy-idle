@@ -161,15 +161,16 @@ func (t *Tracker) completeRecord(ctx context.Context, id int, msg string) error 
 // completeRecord finishes the active record using the provided datetime as period end
 func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
 	// don't use sql ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
-	statement, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?)`)
+	statement, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
 	if err != nil {
 		return err
 	}
-	_, err = statement.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
+	res, err := statement.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
 	if err != nil {
 		log.Println(err.Error())
 	}
-	log.Printf("%s rec=#%d", msg, id)
+	affected, _ := res.RowsAffected()
+	log.Printf("%s rec=#%d rowsUpdated=%d", msg, id, affected)
 	return err
 }
 
