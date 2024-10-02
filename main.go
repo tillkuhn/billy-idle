@@ -57,7 +57,9 @@ func main() {
 		t := tracker.New(&opts)
 		// todo: more cases, less ifs .. and ask the cobra for help :-)
 		if os.Args[1] == "report" {
-			_ = t.Report(ctx, os.Stdout)
+			if err := t.Report(ctx, os.Stdout); err != nil {
+				log.Println(err)
+			}
 			break
 		}
 

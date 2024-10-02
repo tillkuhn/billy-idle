@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -19,20 +20,27 @@ type Options struct {
 
 // TrackRecord representation of a database record
 type TrackRecord struct {
-	ID        int       `db:"id"`
-	BusyStart time.Time `db:"busy_start"`
-	BusyEnd   time.Time `db:"busy_end"`
-	Message   string    `db:"message"`
-	Task      string    `db:"task"`
-	Client    string    `db:"client"`
+	ID        int          `db:"id"`
+	BusyStart time.Time    `db:"busy_start"`
+	BusyEnd   sql.NullTime `db:"busy_end"`
+	Message   string       `db:"message"`
+	Task      string       `db:"task"`
+	Client    string       `db:"client"`
 }
 
 func (t TrackRecord) String() string {
-	return fmt.Sprintf("%s %s Spent %v %s", t.BusyStart.Weekday(), t.BusyStart.Format("15:04:05"), t.Duration(), t.Task)
+	verb := "Still busy with"
+	if t.BusyEnd.Valid {
+		verb = "Spent " + t.Duration().String()
+	}
+	return fmt.Sprintf("%s %s %s %s", t.BusyStart.Weekday(), t.BusyStart.Format("15:04:05"), verb, t.Task)
 }
 
 func (t TrackRecord) Duration() time.Duration {
-	return t.BusyEnd.Sub(t.BusyStart)
+	if t.BusyEnd.Valid {
+		return t.BusyEnd.Time.Sub(t.BusyStart)
+	}
+	return 0
 }
 
 // IdleState represents the current state
