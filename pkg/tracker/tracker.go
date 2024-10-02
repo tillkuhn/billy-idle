@@ -179,7 +179,7 @@ func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string
 func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	var records []TrackRecord
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
-	query := `SELECT * FROM track WHERE busy_end IS NOT NULL and busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 100`
+	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 100`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
 	if err := t.db.SelectContext(ctx, &records, query /*, args*/); err != nil {
