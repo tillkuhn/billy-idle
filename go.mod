@@ -3,6 +3,7 @@ module github.com/tillkuhn/billy-idle
 go 1.23.1
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/stretchr/testify v1.9.0
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect

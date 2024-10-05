@@ -26,15 +26,18 @@ func Test_Tracker(t *testing.T) {
 	}(dir)
 	opts := &tracker.Options{
 		CheckInterval: 100 * time.Millisecond,
-		IdleTolerance: 100 * time.Millisecond,
-		AppDir:        dir, // overwrite with tempdir
+		IdleTolerance: 150 * time.Millisecond, // fixed mock value is 125ms
+		AppDir:        dir,                    // overwrite with tempdir
 		Cmd:           "pkg/tracker/ioreg_mock.sh",
+		Debug:         true,
+		DropCreate:    true,
 	}
 	tr := tracker.New(opts)
 	assert.NoError(t, err)
 	go func() { tr.Track(ctx) }()
 	time.Sleep(1 * time.Second)
 	ctxCancel()
+	tr.WaitClose()
 	t.Log("Test finished")
 }
 

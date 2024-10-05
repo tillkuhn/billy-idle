@@ -33,7 +33,7 @@ func (t TrackRecord) String() string {
 	if t.BusyEnd.Valid {
 		verb = "Spent " + t.Duration().String()
 	}
-	return fmt.Sprintf("%s %s %s %s", t.BusyStart.Weekday(), t.BusyStart.Format("15:04:05"), verb, t.Task)
+	return fmt.Sprintf("%s %s %s %s", t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), verb, t.Task)
 }
 
 func (t TrackRecord) Duration() time.Duration {
@@ -109,7 +109,7 @@ func (i *IdleState) ExceedsCheckTolerance(idleTolerance time.Duration) bool {
 	return i.Busy() && i.TimeSinceLastCheck() >= idleTolerance
 }
 
-// DueForBusy returns true if a switch to busy mode us due
-func (i *IdleState) DueForBusy(idleMillis int64, idleTolerance time.Duration) bool {
+// IsBusy returns true if current idle time is lower than the idle tolerance
+func (i *IdleState) IsBusy(idleMillis int64, idleTolerance time.Duration) bool {
 	return i.idle && idleMillis < idleTolerance.Milliseconds()
 }

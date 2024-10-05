@@ -8,9 +8,9 @@
        <string>$HOME/bin/billy</string>
        <string>track</string>
        <string>-idle</string>
-       <string>2m</string>
+       <string>10m</string>
        <string>-interval</string>
-       <string>10s</string>
+       <string>20s</string>
 
        <!--
            <string>-db-dir</string>
