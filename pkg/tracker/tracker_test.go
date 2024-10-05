@@ -46,7 +46,7 @@ func Test_Insert(t *testing.T) {
 	assert.Equal(t, 42, id)
 }
 
-func Test_UPDATE(t *testing.T) {
+func Test_Update(t *testing.T) {
 	tr, mock := DBMock(t)
 	sql1 := "UPDATE track(.*)"
 	mock.ExpectPrepare(sql1)

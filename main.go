@@ -68,7 +68,7 @@ func main() {
 		}()
 
 		sig := <-sigChan
-		log.Printf("🛑 Received signal %v, initiate shutdown", sig)
+		log.Printf("🔫 Received signal %v, initiate shutdown", sig)
 		ctxCancel()
 		t.WaitClose()
 	default:
@@ -77,7 +77,7 @@ func main() {
 	}
 }
 
-// defaultAppDir returns the default applications directory in $HOME
+// defaultAppDir returns the default applications directory in $HOME, e.g. $HOME/.billy-idle/<env>
 func defaultAppDir(env string) string {
 	home, err := os.UserHomeDir() // $HOME on *nix
 	if err != nil {

@@ -1,15 +1,15 @@
-APP_NAME=billy-idle
+#-------------------
+# Common Variables
+#-------------------
 ARCH = $(shell uname -m)
 OSNAME = $(shell uname -o)
-BINARY ?= billy
-LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 PROJECT_PKG = $(shell grep -e ^module go.mod|cut -d' '  -f2|xargs)
 # git info for ldflags inspired by https://github.com/oras-project/oras/blob/main/Makefile
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 GIT_TAG     = $(shell git describe --tags --abbrev=0 2>/dev/null)
 #GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 LDFLAGS = -w
-# LDFLAGS += -X $(PROJECT_PKG)/internal/version.GitCommit=${GIT_COMMIT}
+LDFLAGS += -X main.cmmit=${GIT_COMMIT}
 LDFLAGS += -X main.date=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 ifneq ($(GIT_TAG),)
@@ -22,9 +22,16 @@ else
 endif
 
 #-------------------
-# Common Targets
+# Custom Variables
 #-------------------
 
+APP_NAME=billy-idle
+BINARY ?= billy
+LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
+
+#-------------------
+# Common Targets
+#-------------------
 .PHONY: help
 help: ## Shows the help
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -38,15 +45,16 @@ help: ## Shows the help
 # default goreleaser  dist/billy-idle_darwin_arm64/billy
 .PHONY: build-mac
 build-mac: ## build for mac current arch using default goreleaser target path
-	GOARCH=$(ARCH) CGO_ENABLED=0 GOOS=darwin go build -v --ldflags="$(LDFLAGS)" \
-		-o dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
+	GOARCH=$(ARCH) CGO_ENABLED=0 GOOS=darwin \
+	go build -v --ldflags="$(LDFLAGS)" \
+	-o dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
 
 run-mac: build-mac ## run mac build
 	dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
 
 .PHONY: build
 build: build-mac ## build all targets
-	@find dist -type f
+	@find dist -type f -exec ls -hl {} \;
 
 .PHONY: release
 release: ## run goreleaser in snapshot mode
@@ -73,9 +81,17 @@ test: lint ## Run tests with coverage, implies lint
 tidy: ## Add missing and remove unused modules
 	go mod tidy
 
-PHONE: update
+.PHONY: update
 update: ## Update all go dependencies
 	@go get -u all
+
+.PHONY: vulncheck
+vulncheck: ## Run govulncheck scanner
+	@if ! hash govulncheck 2>/dev/null; then \
+  		echo "Installing govulncheck"; \
+		go install golang.org/x/vuln/cmd/govulncheck@latest; \
+	fi
+	govulncheck ./...
 
 #-------------------
 # Custom Targets
@@ -93,13 +109,12 @@ report-dev: ## Show report for dev db
 report: ## Show report for default db
 	go run main.go report -debug
 
-
 .PHONY: run-help
 run-help: ## Run app in help mode
 	@go run main.go help
 
 .PHONY: install
-install: build-mac ## Install as launchd managed service
+install: clean build ## Install as launchd managed service
 	@mkdir -p $(HOME)/.billy-idle
 	@if launchctl list $(LAUNCHD_LABEL) 2>/dev/null|grep '"Program"'; then \
   		echo "$(LAUNCHD_LABEL) is loaded, trigger unload"; \

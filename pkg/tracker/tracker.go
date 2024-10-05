@@ -9,6 +9,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -69,8 +70,9 @@ func (t *Tracker) Track(ctx context.Context) {
 			case err != nil:
 				log.Println(err.Error())
 			case ist.ExceedsIdleTolerance(idleMillis, t.opts.IdleTolerance):
-				msg := fmt.Sprintf("%s Enter idle mode after %v Busy time", ist.Icon(), ist.TimeSinceLastSwitch())
+				busySince := ist.TimeSinceLastSwitch()
 				ist.SwitchState()
+				msg := fmt.Sprintf("%s Enter idle mode after %v busy time", ist.Icon(), busySince)
 				_ = t.completeRecord(ctx, ist.id, msg)
 			case ist.ExceedsCheckTolerance(t.opts.IdleTolerance):
 				ist.SwitchState()
@@ -79,12 +81,13 @@ func (t *Tracker) Track(ctx context.Context) {
 				// We have to date back the end of the Busy period to the last known active check
 				// Oh, you have to love Go's time and duration handling: https://stackoverflow.com/a/26285835/4292075
 				_ = t.completeRecordWithTime(ctx, ist.id, msg, time.Now().Add(ist.TimeSinceLastCheck()*-1))
-			case ist.DueForBusy(idleMillis, t.opts.IdleTolerance):
+			case ist.IsBusy(idleMillis, t.opts.IdleTolerance):
+				idleSince := ist.TimeSinceLastSwitch()
 				ist.SwitchState()
-				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", ist.Icon(), ist.TimeSinceLastSwitch())
+				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", ist.Icon(), idleSince)
 				ist.id, _ = t.newRecord(ctx, msg)
 			}
-			t.checkpoint(ist, idleMillis)
+			t.checkpoint(ist, idleMillis) // outputs current state details if debug is enabled
 			ist.lastCheck = time.Now()
 
 			// time.Sleep doesn't react to context cancellation, but context.WithTimeout does
@@ -146,11 +149,12 @@ func (t *Tracker) newRecord(ctx context.Context, msg string) (int, error) {
 	}
 	var id int
 	// Golang SQL insert row and get returning ID example: https://gist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
-	err = statement.QueryRowContext(ctx, msg, t.opts.ClientID, randomTask(), time.Now().Round(time.Second)).Scan(&id)
+	task := randomTask()
+	err = statement.QueryRowContext(ctx, msg, t.opts.ClientID, task, time.Now().Round(time.Second)).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
-	log.Printf("%s rec=#%d", msg, id)
+	log.Printf("%s task='%s' id=#%d", msg, task, id)
 	return id, err
 }
 
@@ -168,35 +172,73 @@ func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string
 	}
 	res, err := statement.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("Cannot complete record %d: %v", id, err)
 	}
 	affected, _ := res.RowsAffected()
-	log.Printf("%s rec=#%d rowsUpdated=%d", msg, id, affected)
+	log.Printf("%s id=#%d rowsUpdated=%d", msg, id, affected)
 	return err
 }
 
-// Report experimental report for time tracking apps
-func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
-	var records []TrackRecord
+// getRecords retried existing track records for a specific time period
+func (t *Tracker) getRecords(ctx context.Context) (map[string][]TrackRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 100`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
+	var records []TrackRecord
 	if err := t.db.SelectContext(ctx, &records, query /*, args*/); err != nil {
+		return nil, err
+	}
+	recMap := map[string][]TrackRecord{}
+	for _, r := range records {
+		k := r.BusyStart.Format("2006-01-02") // go ref Mon Jan 2 15:04:05 -0700 MST 2006
+		recMap[k] = append(recMap[k], r)
+	}
+	return recMap, nil
+}
+
+// Report experimental report for time tracking apps
+func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
+	recMap, err := t.getRecords(ctx)
+	if err != nil {
 		return err
 	}
 
-	_, _ = fmt.Fprintf(w, "\n%s DAILY BILLY IDLE REPORT %s\n", strings.Repeat("-", 30), strings.Repeat("-", 30))
-	var spent time.Duration
-	for _, r := range records {
-		_, _ = fmt.Fprintln(w, r)
-		spent += r.Duration()
+	// go maps are unsorted, so we have to https://yourbasic.org/golang/sort-map-keys-values/
+	keys := make([]string, 0, len(recMap))
+	for k := range recMap {
+		keys = append(keys, k)
 	}
-	kitKat := 30 * time.Minute
-	_, _ = fmt.Fprintln(w, strings.Repeat("-", 84))
-	_, _ = fmt.Fprintf(w, "Total time spent: %v (net) / %v (with %v kitKat break)\n",
-		spent.Round(time.Minute), (spent + kitKat).Round(time.Minute), kitKat.Round(time.Minute))
-	_, _ = fmt.Fprintln(w, strings.Repeat("-", 84))
+	sort.Strings(keys)
+
+	_, _ = fmt.Fprintf(w, "\n%s DAILY BILLY IDLE REPORT %s\n", strings.Repeat("-", 30), strings.Repeat("-", 30))
+	// Outer Loop: key days (2024-10-04)
+	for _, k := range keys {
+		// inner loop: track records per day
+		recs := recMap[k]
+		first := recs[0]
+		last := recs[len(recs)-1]
+		var spentBusy, spentTotal time.Duration
+		for _, r := range recs {
+			_, _ = fmt.Fprintln(w, k, r)
+			spentBusy += r.Duration()
+		}
+
+		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
+		kitKat := 30 * time.Minute
+		if last.BusyEnd.Valid {
+			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart)
+		} else {
+			spentTotal = last.BusyStart.Sub(first.BusyStart) // last record not complete, use start time instead
+		}
+		_, _ = fmt.Fprintf(w, "%s Total totalTime=%v busyTime=%v busyTimePlus=%v (plus=%v break)\n",
+			first.BusyStart.Format("2006-01-02 Mon"),
+			spentTotal.Round(time.Minute),
+			spentBusy.Round(time.Minute),
+			(spentBusy + kitKat).Round(time.Minute), kitKat.Round(time.Minute))
+		_, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
+		_, _ = fmt.Fprintln(w, "")
+	}
 	return nil
 }
 
