@@ -64,8 +64,10 @@ func Test_Report(t *testing.T) {
 	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
 			mock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
-				AddRow("1", start, start.Add(5*time.Minute), "Having a DejaVu").
-				AddRow("2", start, start.Add(3*time.Minute), "Debugging Code"))
+				AddRow("1", start, start.Add(6*time.Minute), "Having a DejaVu").
+				AddRow("2", start, start.Add(3*time.Minute), "Debugging Code but only for s short time").
+				AddRow("3", start, nil, "Unfinished business"),
+		)
 	mock.ExpectClose()
 	var output bytes.Buffer
 	assert.NoError(t, tr.Report(context.Background(), &output))

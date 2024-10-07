@@ -111,7 +111,8 @@ report: ## Show report for default db
 
 .PHONY: run-help
 run-help: ## Run app in help mode
-	@go run main.go help
+	go run main.go help
+	go run main.go track -h
 
 .PHONY: install
 install: clean build ## Install as launchd managed service
