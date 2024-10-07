@@ -225,12 +225,12 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		}
 
 		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
-		kitKat := 30 * time.Minute
 		if last.BusyEnd.Valid {
 			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart)
 		} else {
 			spentTotal = last.BusyStart.Sub(first.BusyStart) // last record not complete, use start time instead
 		}
+		kitKat := mandatoryBreak(spentBusy)
 		_, _ = fmt.Fprintf(w, "%s Total totalTime=%v busyTime=%v busyTimePlus=%v (plus=%v break)\n",
 			first.BusyStart.Format("2006-01-02 Mon"),
 			spentTotal.Round(time.Minute),
@@ -258,5 +258,21 @@ func randomTask() string {
 		return fmt.Sprintf("Feeding a %s named %s", gofakeit.Animal(), gofakeit.PetName())
 	default:
 		return "Doing boring stuff"
+	}
+}
+
+// mandatoryBreak returns the mandatory break time depending on the total busy time
+func mandatoryBreak(d time.Duration) time.Duration {
+	switch {
+	case d <= 6*time.Hour:
+		return 0
+	case d <= 6*time.Hour+30*time.Minute:
+		return d - 6*time.Hour
+	case d <= 9*time.Hour:
+		return 30 * time.Minute
+	case d <= 9*time.Hour+30*time.Minute:
+		return d - 9*time.Hour + 30*time.Minute
+	default:
+		return 45 * time.Minute
 	}
 }

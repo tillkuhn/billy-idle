@@ -85,3 +85,12 @@ func DBMock(t *testing.T) (*Tracker, sqlmock.Sqlmock) {
 	}
 	return tr, sqlMock
 }
+
+func Test_mandatoryBreak(t *testing.T) {
+	assert.Equal(t, 0*time.Minute, mandatoryBreak(5*time.Hour))
+	assert.Equal(t, 9*time.Minute, mandatoryBreak(6*time.Hour+9*time.Minute))
+	assert.Equal(t, 30*time.Minute, mandatoryBreak(6*time.Hour+31*time.Minute))
+	assert.Equal(t, 30*time.Minute, mandatoryBreak(8*time.Hour))
+	assert.Equal(t, 39*time.Minute, mandatoryBreak(9*time.Hour+9*time.Minute))
+	assert.Equal(t, 45*time.Minute, mandatoryBreak(9*time.Hour+31*time.Minute))
+}
