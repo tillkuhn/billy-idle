@@ -16,6 +16,7 @@ type Options struct {
 	DropCreate    bool
 	Env           string
 	IdleTolerance time.Duration
+	MinBusy       time.Duration
 }
 
 // TrackRecord representation of a database record
@@ -33,7 +34,7 @@ func (t TrackRecord) String() string {
 	if t.BusyEnd.Valid {
 		verb = "Spent " + t.Duration().String()
 	}
-	return fmt.Sprintf("%s %s %s %s", t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), verb, t.Task)
+	return fmt.Sprintf("%s %s #%d %s %s", t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), t.ID, verb, t.Task)
 }
 
 func (t TrackRecord) Duration() time.Duration {

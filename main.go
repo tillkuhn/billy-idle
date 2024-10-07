@@ -42,6 +42,7 @@ func main() {
 	trackCmd.StringVar(&opts.Env, "env", "default", "Environment")
 	trackCmd.DurationVar(&opts.CheckInterval, "interval", 2*time.Second, "Interval to check for idle time")
 	trackCmd.DurationVar(&opts.IdleTolerance, "idle", 10*time.Second, "Max tolerated idle time before client enters idle state")
+	trackCmd.DurationVar(&opts.MinBusy, "min-busy", 5*time.Minute, "Minimum time for a busy record to count for the report")
 	if len(os.Args) < 2 {
 		os.Args = append(os.Args, "help")
 	}

@@ -182,7 +182,7 @@ func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string
 // getRecords retried existing track records for a specific time period
 func (t *Tracker) getRecords(ctx context.Context) (map[string][]TrackRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
-	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 100`
+	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
 	var records []TrackRecord
@@ -219,23 +219,33 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		first := recs[0]
 		last := recs[len(recs)-1]
 		var spentBusy, spentTotal time.Duration
+		var skippedTooShort int
 		for _, r := range recs {
-			_, _ = fmt.Fprintln(w, k, r)
-			spentBusy += r.Duration()
+			if r.Duration() >= t.opts.MinBusy {
+				_, _ = fmt.Fprintln(w, k, r)
+				spentBusy += r.Duration()
+			} else {
+				skippedTooShort++
+			}
 		}
 
-		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
 		if last.BusyEnd.Valid {
 			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart)
 		} else {
-			spentTotal = last.BusyStart.Sub(first.BusyStart) // last record not complete, use start time instead
+			// last record not complete, show anyway and use start instead of end time
+			_, _ = fmt.Fprintln(w, k, last)
+			spentTotal = last.BusyStart.Sub(first.BusyStart)
 		}
+		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
+
 		kitKat := mandatoryBreak(spentBusy)
-		_, _ = fmt.Fprintf(w, "%s Total totalTime=%v busyTime=%v busyTimePlus=%v (plus=%v break)\n",
+		_, _ = fmt.Fprintf(w, "%s total=%v busy=%v busyPlus=%v (inc. %.0fm break) skipped=%d (<%v)\n",
 			first.BusyStart.Format("2006-01-02 Mon"),
 			spentTotal.Round(time.Minute),
 			spentBusy.Round(time.Minute),
-			(spentBusy + kitKat).Round(time.Minute), kitKat.Round(time.Minute))
+			(spentBusy + kitKat).Round(time.Minute), kitKat.Round(time.Minute).Minutes(),
+			skippedTooShort, t.opts.MinBusy,
+		)
 		_, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
 		_, _ = fmt.Fprintln(w, "")
 	}
@@ -247,15 +257,15 @@ func randomTask() string {
 	// r := rand.IntN(3)
 	switch rand.IntN(4) {
 	case 0:
-		return fmt.Sprintf("Drinking a %s %s", gofakeit.BeerStyle(), gofakeit.BeerName())
+		return fmt.Sprintf("Drinking a %s %s with %s", gofakeit.BeerStyle(), gofakeit.BeerName(), gofakeit.BeerAlcohol())
 	case 1:
-		return fmt.Sprintf("Driving a %s %s to %s", gofakeit.CarModel(), gofakeit.CarType(), gofakeit.City())
+		return fmt.Sprintf("Driving a %s %s to %s", gofakeit.CarType(), gofakeit.CarModel(), gofakeit.City())
 	case 2:
-		return fmt.Sprintf("Eating a %s with %s", gofakeit.Dessert(), gofakeit.Fruit())
+		return fmt.Sprintf("Eating a %s topped with %s", gofakeit.Dessert(), gofakeit.Fruit())
 	case 3:
-		return fmt.Sprintf("Building app %s in %s", gofakeit.AppName(), gofakeit.ProgrammingLanguage())
+		return fmt.Sprintf("Building App %s %s in %s", gofakeit.AppName(), gofakeit.AppVersion(), gofakeit.ProgrammingLanguage())
 	case 4:
-		return fmt.Sprintf("Feeding a %s named %s", gofakeit.Animal(), gofakeit.PetName())
+		return fmt.Sprintf("Feeding a %s named %s with %s", gofakeit.Animal(), gofakeit.PetName(), gofakeit.MinecraftFood())
 	default:
 		return "Doing boring stuff"
 	}
