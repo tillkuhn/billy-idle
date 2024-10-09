@@ -205,41 +205,51 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	}
 
 	// go maps are unsorted, so we have to https://yourbasic.org/golang/sort-map-keys-values/
-	keys := make([]string, 0, len(recMap))
+	dailyRecs := make([]string, 0, len(recMap))
 	for k := range recMap {
-		keys = append(keys, k)
+		dailyRecs = append(dailyRecs, k)
 	}
-	sort.Strings(keys)
+	sort.Strings(dailyRecs)
 
 	_, _ = fmt.Fprintf(w, "\n%s DAILY BILLY IDLE REPORT %s\n", strings.Repeat("-", 30), strings.Repeat("-", 30))
 	// Outer Loop: key days (2024-10-04)
-	for _, k := range keys {
+	for dayIdx, day := range dailyRecs {
+		lastDay := dayIdx == len(dailyRecs)-1
 		// inner loop: track records per day
-		recs := recMap[k]
+		recs := recMap[day]
 		first := recs[0]
 		last := recs[len(recs)-1]
 		var spentBusy, spentTotal time.Duration
 		var skippedTooShort int
-		for _, r := range recs {
-			if r.Duration() >= t.opts.MinBusy {
-				_, _ = fmt.Fprintln(w, k, r)
-				spentBusy += r.Duration()
+		for _, rec := range recs {
+			if rec.Duration() >= t.opts.MinBusy {
+				_, _ = fmt.Fprintln(w, day, rec)
+				spentBusy += rec.Duration()
 			} else {
 				skippedTooShort++
 			}
 		}
 
 		if last.BusyEnd.Valid {
-			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart)
+			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart) // last record is complete
 		} else {
-			// last record not complete, show anyway and use start instead of end time
-			_, _ = fmt.Fprintln(w, k, last)
-			spentTotal = last.BusyStart.Sub(first.BusyStart)
+			// last record not complete, show anyway and use either start instead of end time
+			// or if this is the last record of the last day, calculate the relative time to now()
+			// since this is likely the record that is still active
+			_, _ = fmt.Fprintln(w, day, last)
+			if lastDay {
+				spentTotal = time.Since(first.BusyStart)
+				spentBusy += time.Since(last.BusyStart)
+			} else {
+				spentTotal = last.BusyStart.Sub(first.BusyStart)
+				// ignore incomplete record for busy calc
+			}
 		}
 		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
 
 		kitKat := mandatoryBreak(spentBusy)
-		_, _ = fmt.Fprintf(w, "%s total=%v busy=%v busyPlus=%v (inc. %.0fm break) skipped=%d (<%v)\n",
+		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
+		_, _ = fmt.Fprintf(w, "%s total=%v busy=%v busy+=%v (inc. %.0fm break) skipped=%d (<%v)\n",
 			first.BusyStart.Format("2006-01-02 Mon"),
 			spentTotal.Round(time.Minute),
 			spentBusy.Round(time.Minute),
@@ -252,7 +262,6 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	return nil
 }
 
-// randomTask returns a task with random creative content :-)
 func randomTask() string {
 	// r := rand.IntN(3)
 	switch rand.IntN(4) {
@@ -272,6 +281,17 @@ func randomTask() string {
 }
 
 // mandatoryBreak returns the mandatory break time depending on the total busy time
+// AI generated comment: Here's a breakdown of what the function does:
+//
+// It takes a duration d as input, which represents the total busy time.
+// The function uses a series of switch cases to determine the mandatory break time based on the value of d.
+// The cases are:
+//
+// If d is less than or equal to 6 hours (i.e., d <= 6*time.Hour), then the mandatory break time is 0.
+// If d is between 6 hours and 6 hours and 30 minutes (inclusive, i.e., d <= 6*time.Hour+30*time.Minute), then the mandatory break time is the difference between d and 6 hours.
+// If d is between 6 hours and 30 minutes and 9 hours (inclusive, i.e., d <= 9*time.Hour), then the mandatory break time is 30 minutes.
+// If d is between 9 hours and 9 hours and 30 minutes (inclusive, i.e., d <= 9*time.Hour+30*time.Minute), then the mandatory break time is the difference between d and 9 hours minus 30 minutes,
+// Otherwise (i.e., if d is greater than 9 hours and 30 minutes), then the mandatory break time is 45 minutes.
 func mandatoryBreak(d time.Duration) time.Duration {
 	switch {
 	case d <= 6*time.Hour:
@@ -280,7 +300,7 @@ func mandatoryBreak(d time.Duration) time.Duration {
 		return d - 6*time.Hour
 	case d <= 9*time.Hour:
 		return 30 * time.Minute
-	case d <= 9*time.Hour+30*time.Minute:
+	case d <= 9*time.Hour+15*time.Minute:
 		return d - 9*time.Hour + 30*time.Minute
 	default:
 		return 45 * time.Minute
