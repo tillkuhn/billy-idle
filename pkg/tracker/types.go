@@ -17,6 +17,8 @@ type Options struct {
 	Env           string
 	IdleTolerance time.Duration
 	MinBusy       time.Duration
+	MaxBusy       time.Duration
+	RegBusy       time.Duration
 }
 
 // TrackRecord representation of a database record

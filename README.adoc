@@ -11,25 +11,32 @@ According to the article, OS X has a timer called *HIDIdleTime* that tracks the 
 
 *billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
 
-== Example Report
+== Example Time Tracking Report
 
 ----
------------------------------------- DAILY BILLY IDLE REPORT ------------------------------
-Tuesday 13:10:03: Spent 2m30s Drinking a Bock Celebrator Doppelbock
-Tuesday 13:54:12: Spent 40m52s Building app Horsehad in Cayenne
-Tuesday 14:07:48: Spent 2s Driving a Highlander Hybrid 2wd Passenger car compact to Austin
-Tuesday 14:10:23: Spent 1s Drinking a Bock HopSlam Ale
-Tuesday 14:10:35: Spent 2s Driving a Sl600 Passenger car light to Winston-Salem
-Tuesday 14:11:21: Spent 5s Drinking a Porter Racer 5 India Pale Ale, Bear Republic Bre
-Tuesday 14:11:32: Spent 3s Drinking a Belgian And French Ale Pliny The Elder
-Tuesday 14:12:48: Spent 1s Drinking a Dark Lager Founders Breakfast Stout
-Tuesday 14:35:04: Spent 1m6s Building app Thingdoes in SASL
-Tuesday 14:36:10: Spent 23s Drinking a Porter Orval Trappist Ale
-Tuesday 14:36:33: Spent 1h51m16s Eating a Viskos praline sauce with Blueberry
-Tuesday 16:28:49: Spent 44m40s Driving a Charger Sport utility vehicle to St. Petersburg
-------------------------------------------------------------------------------------
-Total time spent: 3h21m0s (net) / 3h51m0s (with 30m0s kitKat break)
-------------------------------------------------------------------------------------
+2024-10-08 Tue 08:46:55 #131 Spent 1h24m21s Building App Beetlecan 3.7.17 in Prolog until 10:11AM
+2024-10-08 Tue 11:09:36 #132 Spent 32m12s Eating a Islands bananas foster topped with Gooseberry until 11:41AM
+2024-10-08 Tue 11:41:49 #133 Spent 1h11m45s Driving a Sport utility vehicle Grand Marquis to Virginia Beach until 12:53PM
+2024-10-08 Tue 12:59:47 #134 Spent 11m21s Building App Cigarettebe 4.13.19 in JOSS until 1:11PM
+2024-10-08 Tue 13:32:02 #135 Spent 1h46m51s Driving a Passenger car medium C1500 Yukon 2wd to Glendale until 3:18PM
+2024-10-08 Tue 15:30:33 #136 Spent 1h56m28s Eating a Chocolate almond roca bar topped with Cherry until 5:27PM
+2024-10-08 Tue 17:30:30 #137 Spent 11m41s Driving a Passenger car compact Bentley Arnage to Hialeah until 5:42PM
+2024-10-08 Tue 18:39:54 #138 Spent 1h19m44s Driving a Passenger car heavy Escalade Esv Awd to Louisville/Jefferson until 7:59PM
+2024-10-08 Tue 19:59:58 #139 Spent 43m43s Driving a Van M3 Convertible to Reno until 8:43PM
+----------------------------------------------------------------------------------------------------
+total: 20h46m0s  busy: 9h18m0s  busy+break: 10h3m0s  skipped(<5m0s): 12  belowMax(10h0m0s): true
+Simple Entry for Tuesday: 09:00 → 19:03 (inc. 45m break) overtime: 1h30m0s
+====================================================================================================
+----
+----
+2024-10-10 Thu 03:05:53 #157 Spent 48m27s Drinking a Fruit Beer Péché Mortel with 6.6% until 3:54AM
+2024-10-10 Thu 08:54:09 #158 Spent 4h2m30s Building App Dollarjump 2.11.6 in Napier88 until 12:56PM
+2024-10-10 Thu 13:17:21 #159 Spent 3h59m22s Eating a Sonic strawberry cheesecake shake topped with Huckleberry until 5:16PM
+2024-10-10 Thu 17:17:44 #160 🕰️  Still busy with Building App SkyBlueline 5.14.18 in Elixir since 49m50s
+----------------------------------------------------------------------------------------------------
+total: 17h48m0s  busy: 9h40m0s  busy+break: 10h25m0s  skipped(<5m0s): 3  belowMax(10h0m0s): true
+Simple Entry for Thursday: 09:00 → 19:25 (inc. 45m break) overtime: 1h52m0s
+====================================================================================================
 ----
 
 == Run form source

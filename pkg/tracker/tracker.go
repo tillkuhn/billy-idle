@@ -248,19 +248,26 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
 
 		kitKat := mandatoryBreak(spentBusy)
+		spentBusy = spentBusy.Round(time.Minute)
+		spentTotal = spentTotal.Round(time.Minute)
 		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
-		_, _ = fmt.Fprintf(w, "%s total=%v busy=%v busy+=%v (inc. %.0fm break) skipped=%d (<%v)\n",
-			first.BusyStart.Format("2006-01-02 Mon"),
-			spentTotal.Round(time.Minute),
-			spentBusy.Round(time.Minute),
+		_, _ = fmt.Fprintf(w, "total: %v  busy: %v  busy+break: %v  skipped(<%v): %d  belowMax(%v): %v\n",
+			//first.BusyStart.Format("2006-01-02 Mon"),
+			spentTotal,
+			spentBusy,
 			(spentBusy + kitKat).Round(time.Minute),
-			kitKat.Round(time.Minute).Minutes(),
-			skippedTooShort, t.opts.MinBusy,
+			t.opts.MinBusy, skippedTooShort,
+			t.opts.MaxBusy, spentBusy <= t.opts.MaxBusy,
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
-		_, _ = fmt.Fprintf(w, "%s Suggestion: %v until %v %s\n", strings.Repeat("=", 30),
-			sugStart.Format("15:04"), sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), strings.Repeat("=", 30))
-		// _, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
+		_, _ = fmt.Fprintf(w, "Simple Entry for %s: %v → %v (inc. %.0fm break) overtime: %v\n",
+			first.BusyStart.Format("Monday"),
+			sugStart.Format("15:04"),
+			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),
+			kitKat.Round(time.Minute).Minutes(),
+			spentBusy-t.opts.RegBusy,
+		)
+		_, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
 		_, _ = fmt.Fprintln(w, "")
 	}
 	return nil
