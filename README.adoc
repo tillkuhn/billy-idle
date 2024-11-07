@@ -39,7 +39,7 @@ Simple Entry for Thursday: 09:00 → 19:25 (inc. 45m break) overtime: 1h52m0s
 ====================================================================================================
 ----
 
-== Run form source
+== Run from source
 
 [source,shell]
 ----
