@@ -41,8 +41,8 @@ func (t TrackRecord) String() string {
 		suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
 	}
 	// 2024-10-09 Wed 09:01:30 #144 Spent 3h31m20s Eating a Frosted rhubarb cookies topped with Honeydew until 12:32PM
-	return fmt.Sprintf("%s %s #%d %s %s %s",
-		t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), t.ID, verb, t.Task, suffix)
+	return fmt.Sprintf("%s %s %s %s %s #%d",
+		t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), verb, t.Task, suffix, t.ID)
 }
 
 func (t TrackRecord) Duration() time.Duration {
