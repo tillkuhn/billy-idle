@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fatih/color"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
 	sqlite3 "modernc.org/sqlite/lib"
@@ -250,9 +252,10 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		kitKat := mandatoryBreak(spentBusy)
 		spentBusy = spentBusy.Round(time.Minute)
 		spentTotal = spentTotal.Round(time.Minute)
+		color.Set(color.FgGreen)
 		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
-		_, _ = fmt.Fprintf(w, "total: %v  busy: %v  busy+break: %v  skipped(<%v): %d  overMax(%v): %v\n",
-			//first.BusyStart.Format("2006-01-02 Mon"),
+		_, _ = fmt.Fprintf(w, "Total: %v  busy: %v  busy+break: %v  skipped(<%v): %d  overMax(%v): %v\n",
+			// first.BusyStart.Format("2006-01-02 Mon"),
 			spentTotal,
 			spentBusy,
 			(spentBusy + kitKat).Round(time.Minute),
@@ -260,6 +263,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			t.opts.MaxBusy, spentBusy > t.opts.MaxBusy,
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
+
 		_, _ = fmt.Fprintf(w, "Simple Entry for %s: %v → %v (inc. %.0fm break)  overtime (>%v): %v\n",
 			first.BusyStart.Format("Monday"),
 			sugStart.Format("15:04"),
@@ -267,6 +271,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			kitKat.Round(time.Minute).Minutes(),
 			t.opts.RegBusy, spentBusy-t.opts.RegBusy,
 		)
+		color.Unset()
 		_, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
 		_, _ = fmt.Fprintln(w, "")
 	}
