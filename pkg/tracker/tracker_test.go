@@ -3,13 +3,10 @@ package tracker
 import (
 	"bytes"
 	"context"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,7 +31,7 @@ func Test_State(t *testing.T) {
 
 func Test_Insert(t *testing.T) {
 	tr, mock := DBMock(t)
-	sql1 := "INSERT INTO track(.*)"
+	sql1 := `INSERT INTO track(.*)`
 	mock.ExpectPrepare(sql1)
 	// Error row: https://github.com/DATA-DOG/go-sqlmock/blob/master/rows_test.go#L53
 	mock.ExpectQuery(sql1).WithArgs("nur der RWE", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -72,20 +69,6 @@ func Test_Report(t *testing.T) {
 	var output bytes.Buffer
 	assert.NoError(t, tr.Report(context.Background(), &output))
 	assert.Contains(t, output.String(), "DejaVu")
-}
-
-// DBMock returns instances of mockDB (compatible with sql.DB)
-// https://github.com/jmoiron/sqlx/issues/204#issuecomment-187641445
-func DBMock(t *testing.T) (*Tracker, sqlmock.Sqlmock) {
-	mockDB, sqlMock, err := sqlmock.New()
-	assert.NoError(t, err)
-	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
-	tr := &Tracker{
-		opts: &Options{},
-		db:   sqlxDB,
-		wg:   sync.WaitGroup{},
-	}
-	return tr, sqlMock
 }
 
 func Test_mandatoryBreak(t *testing.T) {
