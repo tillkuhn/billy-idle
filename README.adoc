@@ -14,18 +14,22 @@ According to the article, OS X has a timer called *HIDIdleTime* that tracks the 
 == Example Time Tracking Report
 
 ----
-2024-10-08 Tue 08:46:55 #131 Spent 1h24m21s Building App Beetlecan 3.7.17 in Prolog until 10:11AM
-2024-10-08 Tue 11:09:36 #132 Spent 32m12s Eating a Islands bananas foster topped with Gooseberry until 11:41AM
-2024-10-08 Tue 11:41:49 #133 Spent 1h11m45s Driving a Sport utility vehicle Grand Marquis to Virginia Beach until 12:53PM
-2024-10-08 Tue 12:59:47 #134 Spent 11m21s Building App Cigarettebe 4.13.19 in JOSS until 1:11PM
-2024-10-08 Tue 13:32:02 #135 Spent 1h46m51s Driving a Passenger car medium C1500 Yukon 2wd to Glendale until 3:18PM
-2024-10-08 Tue 15:30:33 #136 Spent 1h56m28s Eating a Chocolate almond roca bar topped with Cherry until 5:27PM
-2024-10-08 Tue 17:30:30 #137 Spent 11m41s Driving a Passenger car compact Bentley Arnage to Hialeah until 5:42PM
-2024-10-08 Tue 18:39:54 #138 Spent 1h19m44s Driving a Passenger car heavy Escalade Esv Awd to Louisville/Jefferson until 7:59PM
-2024-10-08 Tue 19:59:58 #139 Spent 43m43s Driving a Van M3 Convertible to Reno until 8:43PM
+Tuesday November 12, 2024 (2024-11-12) Daily Report
 ----------------------------------------------------------------------------------------------------
-total: 20h46m0s  busy: 9h18m0s  busy+break: 10h3m0s  skipped(<5m0s): 12  belowMax(10h0m0s): true
-Simple Entry for Tuesday: 09:00 → 19:03 (inc. 45m break) overtime: 1h30m0s
+08:49:23 → 11:14:53: Spent 2h25m30s Building App Monkeydid 2.9.5 in CSP #306
+11:27:51 → 11:38:52: Spent 11m1s Eating a Creamy apple dessert topped with Blackcurrant #307
+11:40:40 → 12:33:24: Spent 52m44s Driving a Passenger car mini Pilot 4wd to Mesa #308
+12:52:23 → 15:05:41: Spent 2h13m18s Driving a Passenger car medium Rio to Sacramento #309
+16:05:28 → 16:27:43: Spent 22m15s Building App Darkorangerain 1.6.1 in F #311
+16:27:43 → 16:58:49: Spent 31m6s Eating a Swirled cranberry cheesecake topped with Rock melon #312
+17:20:02 → 18:51:29: Spent 1h31m27s Eating a Mexican rice pudding topped with Grape #313
+19:07:32 → 19:33:40: Spent 26m8s Drinking a Light Hybrid Beer Stone IPA with 2.8% #317
+19:52:25 → 20:35:48: Spent 43m23s Building App Jellyfishare 2.8.8 in WebDNA #318
+20:52:23 → 21:02:20: Spent 9m57s Building App Troopcould 3.15.7 in Fancy #319
+22:03:36 → now     : 🕰️  Still busy with Eating a A 1 cherry cobbler tart  a1 topped with Apricot #321
+----------------------------------------------------------------------------------------------------
+Total: 13h48m0s  busy: 10h0m0s  busy+break: 10h45m0s  skipped(<5m0s): 6  overMax(10h0m0s): false
+Simple Entry for Tuesday: 09:00 → 19:45 (inc. 45m break)  overtime (>7h48m0s): 2h12m0s
 ====================================================================================================
 ----
 ----
