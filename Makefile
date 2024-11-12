@@ -98,21 +98,22 @@ vulncheck: ## Run govulncheck scanner
 #-------------------
 
 .PHONY: run
-run: ## Run app in tracker mode, add -drop-create to recreate db
-	go run main.go track -env dev -idle 10s -interval 5s -debug
+run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
+	go run main.go --debug track --env dev --idle 10s --interval 5s
 
 .PHONY: report-dev
-report-dev: ## Show report for dev db
-	go run main.go report -env dev -debug
+report-dev: ## Show report for dev env db
+	go run main.go --debug report --env dev
 
 .PHONY: report
 report: ## Show report for default db
-	go run main.go report -debug
+	go run main.go --debug report
 
 .PHONY: run-help
 run-help: ## Run app in help mode
-	go run main.go help
-	go run main.go track -h
+	go run main.go
+	go run main.go track --help
+	go run main.go report --help
 
 .PHONY: install
 install: clean build ## Install as launchd managed service
