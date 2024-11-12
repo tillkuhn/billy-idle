@@ -2,13 +2,10 @@ package tracker
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"io"
 	"log"
 	"math/rand/v2"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -18,13 +15,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
-	sqlite3 "modernc.org/sqlite/lib"
 )
-
-// Package embed provides access to Files embedded in the running Go program.
-//
-//go:embed init-db.sql
-var initSQL string
 
 // Tracker tracks idle state periodically and persist state changes in DB
 type Tracker struct {
@@ -115,32 +106,6 @@ func (t *Tracker) checkpoint(ist IdleState, idleMillis int64) {
 		}
 		log.Printf("%s Checkpoint idleTime=%v %s", ist.Icon(), idleD, asInfo)
 	}
-}
-
-// initDB initializes SQLite DB in local filesystem
-func initDB(opts *Options) (*sqlx.DB, error) {
-	dbFile := filepath.Join(opts.AppDir, "db.sqlite3")
-	log.Printf("🥫 Open database file=%s sqlite=%s", dbFile, sqlite3.SQLITE_VERSION)
-	db, err := sqlx.Open("sqlite", dbFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open db %s: %w", dbFile, err)
-	}
-
-	opts.ClientID, err = os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-
-	// drop table if exists t; insert into t values(42), (314);
-	var dropStmt string
-	if opts.DropCreate {
-		dropStmt = "DROP TABLE IF EXISTS track;\n"
-	}
-	if _, err = db.Exec(dropStmt + initSQL); err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }
 
 // newRecord inserts a new tracking records
