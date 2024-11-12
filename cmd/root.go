@@ -17,7 +17,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "billy-idle",
 	Short: "Simple busy / idle time tracker inspired by the ancient article 'Inactivity and Idle Time on OS X'.",
-	Long: `OS X has a timer called HIDIdleTime that tracks the last time you interacted with the computer, e.g. moved the mouse, typed a key, or interacted with the computer.
+	Long: `Simple busy / idle time tracker based on the macOS timer called HIDIdleTime that tracks the last time you interacted with the computer, e.g. moved the mouse, typed a key, or interacted with the computer.
 
 billy-idle simply queries this value periodically using the ioreg utility that ships with macOS, and matches it against a pre-defined threshold. 
 If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.`,
@@ -44,5 +44,12 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// A flag can be 'persistent', meaning that this flag will be available to the command it's assigned to as well
+	// as every command under that command.
+
+	// For global flags, assign a flag as a persistent flag on the root.
+	rootCmd.PersistentFlags().BoolVarP(&opts.Debug, "debug", "d", false, "Debug checkpoints")
+
+	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

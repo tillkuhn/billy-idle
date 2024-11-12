@@ -21,8 +21,10 @@ var opts tracker.Options
 var trackCmd = &cobra.Command{
 	Use:   "track",
 	Short: "Track idle time",
-	Long:  `Starts the tracker daemon mode to record busy and idle times.`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Long:  `Starts the tracker in daemon mode to record busy and idle times.`,
+	Run: func(cmd *cobra.Command, _ []string) {
+		dbg, _ := cmd.Flags().GetBool("debug")
+		opts.Debug = dbg
 		track()
 	},
 }
@@ -34,7 +36,6 @@ func init() {
 	rootCmd.AddCommand(trackCmd)
 	trackCmd.PersistentFlags().StringVarP(&opts.Env, "env", "e", "default", "Environment")
 	trackCmd.PersistentFlags().StringVarP(&opts.AppDir, "app-dir", "a", "", "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
-	trackCmd.PersistentFlags().BoolVarP(&opts.Debug, "debug", "d", false, "Debug checkpoints")
 	trackCmd.PersistentFlags().StringVarP(&opts.Cmd, "cmd", "c", "ioreg", "Command to retrieve HIDIdleTime")
 	trackCmd.PersistentFlags().BoolVar(&opts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
 	trackCmd.PersistentFlags().DurationVarP(&opts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
