@@ -182,15 +182,22 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	// Outer Loop: key days (2024-10-04)
 	for dayIdx, day := range dailyRecs {
 		lastDay := dayIdx == len(dailyRecs)-1
+
 		// inner loop: track records per day
 		recs := recMap[day]
 		first := recs[0]
 		last := recs[len(recs)-1]
 		var spentBusy, spentTotal time.Duration
 		var skippedTooShort int
+
+		// headline per day
+		color.Set(color.FgCyan, color.Bold)
+		_, _ = fmt.Fprintf(w, "%s (%s) Daily Report\n%s\n", first.BusyStart.Format("Monday January 02, 2006"), day, strings.Repeat("-", 100))
+		color.Unset()
+
 		for _, rec := range recs {
 			if rec.Duration() >= t.opts.MinBusy {
-				_, _ = fmt.Fprintln(w, day, rec)
+				_, _ = fmt.Fprintln(w, rec) // print details
 				spentBusy += rec.Duration()
 			} else {
 				skippedTooShort++
@@ -203,7 +210,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			// last record not complete, show anyway and use either start instead of end time
 			// or if this is the last record of the last day, calculate the relative time to now()
 			// since this is likely the record that is still active
-			_, _ = fmt.Fprintln(w, day, last)
+			_, _ = fmt.Fprintln(w, last)
 			if lastDay {
 				spentTotal = time.Since(first.BusyStart)
 				spentBusy += time.Since(last.BusyStart)

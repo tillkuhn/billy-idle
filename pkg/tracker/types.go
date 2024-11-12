@@ -31,18 +31,20 @@ type TrackRecord struct {
 	Client    string       `db:"client"`
 }
 
+// String returns a string representation of the TrackRecord
 func (t TrackRecord) String() string {
-	var verb, suffix string
+	var verb, to string
 	if t.BusyEnd.Valid {
 		verb = "Spent " + t.Duration().String()
-		suffix = "until " + t.BusyEnd.Time.Format(time.Kitchen)
+		to = t.BusyEnd.Time.Format("15:04:05")
 	} else {
 		verb = "🕰️  Still busy with"
-		suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
+		to = "now"
+		// suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
 	}
 	// 2024-10-09 Wed 09:01:30 #144 Spent 3h31m20s Eating a Frosted rhubarb cookies topped with Honeydew until 12:32PM
-	return fmt.Sprintf("%s %s %s %s %s #%d",
-		t.BusyStart.Format("Mon"), t.BusyStart.Format("15:04:05"), verb, t.Task, suffix, t.ID)
+	return fmt.Sprintf("%s → %-8s: %s %s #%d",
+		/*t.BusyStart.Format("Mon"),*/ t.BusyStart.Format("15:04:05"), to, verb, t.Task, t.ID)
 }
 
 func (t TrackRecord) Duration() time.Duration {
