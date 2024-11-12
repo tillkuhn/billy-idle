@@ -45,7 +45,3 @@ func Test_Help(_ *testing.T) {
 	os.Args = []string{"app", "help"}
 	main()
 }
-
-func Test_DefaultAppDir(t *testing.T) {
-	assert.NotEmpty(t, defaultAppDir("test"))
-}

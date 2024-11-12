@@ -78,41 +78,65 @@ $ launchctl unload ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
 
 [source,shell]
 ----
-$ billy help
+$ billy
 
-Usage: billy [command]
+Usage:
+  billy-idle [command]
 
-Available Commands (more coming soon):
-  track    Starts the tracker
+Available Commands:
+  busy        Enter busy time
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  report      Generate a report
+  track       Track idle time
 
-Use "billy [command] -h" for more information about a command.
+Flags:
+  -d, --debug   Debug checkpoints
+  -h, --help    help for billy-idle
+
 ----
 
 [source,shell]
 ----
-$ billy track -help
+$ billy track -h
 
-Usage of track:
-  -app-dir string
-    	App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>
-  -cmd string
-    	Command to retrieve HIDIdleTime (default "ioreg")
-  -debug
-    	Debug checkpoints
-  -drop-create
-    	Drop and re-create db schema on startup
-  -env string
-    	Environment (default "default")
-  -idle duration
-    	Max tolerated idle time before client enters idle state (default 10s)
-  -interval duration
-    	Interval to check for idle time (default 2s)
-  -max-busy duration
-    	Max allowed time busy period per day (w/o breaks), report only (default 10h0m0s)
-  -min-busy duration
-    	Minimum time for a busy record to count for the report (default 5m0s)
-  -reg-busy duration
-    	Regular busy period per day (w/o breaks), report only (default 7h48m0s)
+Starts the tracker in daemon mode to record busy and idle times.
+
+Usage:
+  billy-idle track [flags]
+
+Flags:
+  -a, --app-dir string      App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>
+  -c, --cmd string          Command to retrieve HIDIdleTime (default "ioreg")
+      --drop-create         Drop and re-create db schema on startup
+  -e, --env string          Environment (default "default")
+  -h, --help                help for track
+  -m, --idle duration       Max tolerated idle time before client enters idle state (default 10s)
+  -i, --interval duration   Interval to check for idle time (default 2s)
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+
+----
+
+[source,shell]
+----
+$ billy report -h
+
+Generates a report based on the recorded idle and busy times.
+
+Usage:
+  billy-idle report [flags]
+
+Flags:
+  -a, --app-dir string      App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>
+  -e, --env string          Environment (default "default")
+  -h, --help                help for report
+      --max-busy duration   Max allowed time busy period per day (w/o breaks), report only (default 10h0m0s)
+      --min-busy duration   Minimum time for a busy record to count for the report (default 5m0s)
+      --reg-busy duration   Regular busy period per day (w/o breaks), report only (default 7h48m0s)
+
+
 ----
 
 == Database Support

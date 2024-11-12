@@ -7,18 +7,13 @@
    <array>
        <string>$HOME/bin/billy</string>
        <string>track</string>
-       <string>-idle</string>
+       <string>--idle</string>
        <string>10m</string>
-       <string>-interval</string>
+       <string>--interval</string>
        <string>20s</string>
 
-       <!--
-           <string>-db-dir</string>
-           <string>$HOME/.billy-idle</string>
-       -->
-
        <!-- optional -->
-       <string>-debug</string>
+       <string>--debug</string>
     </array>
     <key>StandardOutPath</key><string>$HOME/.billy-idle/default/agent.log</string>
     <key>StandardErrorPath</key><string>$HOME/.billy-idle/default/agent.log</string>
