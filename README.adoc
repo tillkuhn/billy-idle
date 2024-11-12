@@ -32,16 +32,6 @@ Total: 13h48m0s  busy: 10h0m0s  busy+break: 10h45m0s  skipped(<5m0s): 6  overMax
 Simple Entry for Tuesday: 09:00 → 19:45 (inc. 45m break)  overtime (>7h48m0s): 2h12m0s
 ====================================================================================================
 ----
-----
-2024-10-10 Thu 03:05:53 #157 Spent 48m27s Drinking a Fruit Beer Péché Mortel with 6.6% until 3:54AM
-2024-10-10 Thu 08:54:09 #158 Spent 4h2m30s Building App Dollarjump 2.11.6 in Napier88 until 12:56PM
-2024-10-10 Thu 13:17:21 #159 Spent 3h59m22s Eating a Sonic strawberry cheesecake shake topped with Huckleberry until 5:16PM
-2024-10-10 Thu 17:17:44 #160 🕰️  Still busy with Building App SkyBlueline 5.14.18 in Elixir since 49m50s
-----------------------------------------------------------------------------------------------------
-total: 17h48m0s  busy: 9h40m0s  busy+break: 10h25m0s  skipped(<5m0s): 3  belowMax(10h0m0s): true
-Simple Entry for Thursday: 09:00 → 19:25 (inc. 45m break) overtime: 1h52m0s
-====================================================================================================
-----
 
 == Run from source
 
