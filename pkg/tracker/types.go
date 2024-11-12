@@ -38,7 +38,7 @@ func (t TrackRecord) String() string {
 		verb = "Spent " + t.Duration().String()
 		to = t.BusyEnd.Time.Format("15:04:05")
 	} else {
-		verb = "🕰️  Still busy with"
+		verb = "Still busy with"
 		to = "now"
 		// suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
 	}

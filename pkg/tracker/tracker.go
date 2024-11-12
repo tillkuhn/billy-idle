@@ -192,7 +192,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 
 		// headline per day
 		color.Set(color.FgCyan, color.Bold)
-		_, _ = fmt.Fprintf(w, "%s (%s) Daily Report\n%s\n", first.BusyStart.Format("Monday January 02, 2006"), day, strings.Repeat("-", 100))
+		_, _ = fmt.Fprintf(w, "🕰  %s (%s) Daily Report\n%s\n", first.BusyStart.Format("Monday January 02, 2006"), day, strings.Repeat("-", 100))
 		color.Unset()
 
 		for _, rec := range recs {
