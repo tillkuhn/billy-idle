@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"context"
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"time"
+
+	"github.com/fatih/color"
 
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
@@ -38,7 +39,6 @@ func init() {
 }
 
 func run() {
-
 	// todo: remove redundancy with track cmd
 	if opts.AppDir == "" {
 		opts.AppDir = defaultAppDir(opts.Env)
