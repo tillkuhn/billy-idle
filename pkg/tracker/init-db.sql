@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS track (
  "message" TEXT,
  "task" TEXT,
  "client" TEXT );
+
 CREATE TABLE IF NOT EXISTS busy (
  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
  "day" DATE NOT NULL DEFAULT (current_date),
