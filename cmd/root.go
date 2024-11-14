@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,6 +14,8 @@ var (
 	// unused: commit, builtBy
 )
 
+var ctxCancel context.CancelFunc
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "billy-idle",
@@ -21,15 +24,16 @@ var rootCmd = &cobra.Command{
 
 billy-idle simply queries this value periodically using the ioreg utility that ships with macOS, and matches it against a pre-defined threshold. 
 If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	// Uncomment the following line if your bare application has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	var ctx context.Context
+	ctx, ctxCancel = context.WithCancel(context.Background())
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}

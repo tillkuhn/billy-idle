@@ -24,7 +24,7 @@ var reportCmd = &cobra.Command{
 			color.NoColor = true // disables colorized output
 		}
 
-		run()
+		run(cmd.Context())
 	},
 }
 
@@ -38,9 +38,9 @@ func init() {
 	reportCmd.PersistentFlags().DurationVar(&opts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }
 
-func run() {
+func run(ctx context.Context) {
 	t := tracker.New(&opts)
-	if err := t.Report(context.Background(), os.Stdout); err != nil {
+	if err := t.Report(ctx, os.Stdout); err != nil {
 		log.Println(err)
 	}
 }
