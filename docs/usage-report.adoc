@@ -1,0 +1,18 @@
+----
+Generates a report based on the recorded idle and busy times.
+
+Usage:
+  billy-idle report [flags]
+
+Flags:
+  -a, --app-root string     App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env> (default "/Users/tillkuhn/.billy-idle")
+  -e, --env string          Environment (default "default")
+  -h, --help                help for report
+      --max-busy duration   Max allowed time busy period per day (w/o breaks), report only (default 10h0m0s)
+      --min-busy duration   Minimum time for a busy record to count for the report (default 5m0s)
+      --no-color            Disable color output
+      --reg-busy duration   Regular busy period per day (w/o breaks), report only (default 7h48m0s)
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----

@@ -58,7 +58,7 @@ issues:
     # this is the exception for commit, data and version variable which with pass in using ldflags
     - path: internal/version/version.go
       linters: [gochecknoglobals]
-    - path: cmd/busy.go
+    - path: cmd/punch.go
       linters: [gochecknoglobals,mnd]
     - path: cmd/report.go
       linters: [gochecknoglobals,mnd]
@@ -66,5 +66,7 @@ issues:
       linters: [gochecknoglobals,mnd]
     - path: cmd/track.go
       linters: [gochecknoglobals,mnd]
+    - path: pkg/tracker/report.go
+      linters: [mnd] # magic number detection is annoying here
     - path: pkg/tracker/tracker.go
       linters: [mnd]

@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,6 +26,11 @@ var trackCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		dbg, _ := cmd.Flags().GetBool("debug")
 		opts.Debug = dbg
+		// auto default to dev env if run with go run (...)
+		// example arg: /var/folders/9w/4543534/T/go-build1898714561/b001/exe/main
+		if opts.Env == "default" && strings.HasSuffix(os.Args[0], "/exe/main") {
+			opts.Env = "dev"
+		}
 		track()
 	},
 }
@@ -34,8 +40,12 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// Cobra supports local flags which will only run when this command
 	rootCmd.AddCommand(trackCmd)
-	trackCmd.PersistentFlags().StringVarP(&opts.Env, "env", "e", "default", "Environment")
-	trackCmd.PersistentFlags().StringVarP(&opts.AppDir, "app-dir", "a", "", "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
+	defaultEnv := "default"
+	if strings.HasSuffix(os.Args[0], "/exe/main") {
+		defaultEnv = "dev"
+	}
+	trackCmd.PersistentFlags().StringVarP(&opts.Env, "env", "e", defaultEnv, "Environment")
+	trackCmd.PersistentFlags().StringVarP(&opts.AppRoot, "app-root", "a", defaultAppRoot(), "App root Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle")
 	trackCmd.PersistentFlags().StringVarP(&opts.Cmd, "cmd", "c", "ioreg", "Command to retrieve HIDIdleTime")
 	trackCmd.PersistentFlags().BoolVar(&opts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
 	trackCmd.PersistentFlags().DurationVarP(&opts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
@@ -49,17 +59,7 @@ func track() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	ctx, ctxCancel := context.WithCancel(context.Background())
-	if opts.AppDir == "" {
-		opts.AppDir = defaultAppDir(opts.Env)
-	}
 	t := tracker.New(&opts)
-	// todo: more cases, less ifs .. and ask the cobra for help :-)
-	if os.Args[1] == "report" {
-		if err := t.Report(ctx, os.Stdout); err != nil {
-			log.Println(err)
-		}
-	}
-
 	go func() {
 		t.Track(ctx)
 	}()
@@ -70,14 +70,10 @@ func track() {
 	t.WaitClose()
 }
 
-func defaultAppDir(env string) string {
+func defaultAppRoot() string {
 	home, err := os.UserHomeDir() // $HOME on *nix
 	if err != nil {
 		log.Fatal(err)
 	}
-	dir := filepath.Join(home, ".billy-idle", env)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		log.Fatal(err)
-	}
-	return dir
+	return home + string(os.PathSeparator) + ".billy-idle"
 }

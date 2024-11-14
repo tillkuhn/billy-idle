@@ -3,6 +3,7 @@ package tracker
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type Options struct {
 	CheckInterval time.Duration
 	ClientID      string
 	Cmd           string
-	AppDir        string
+	AppRoot       string
 	Debug         bool
 	DropCreate    bool
 	Env           string
@@ -19,6 +20,10 @@ type Options struct {
 	MinBusy       time.Duration
 	MaxBusy       time.Duration
 	RegBusy       time.Duration
+}
+
+func (o Options) AppDir() string {
+	return filepath.Join(o.AppRoot, o.Env)
 }
 
 // TrackRecord representation of a database record

@@ -1,0 +1,18 @@
+----
+Starts the tracker in daemon mode to record busy and idle times.
+
+Usage:
+  billy-idle track [flags]
+
+Flags:
+  -a, --app-root string     App root Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle (default "/Users/tillkuhn/.billy-idle")
+  -c, --cmd string          Command to retrieve HIDIdleTime (default "ioreg")
+      --drop-create         Drop and re-create db schema on startup
+  -e, --env string          Environment (default "dev")
+  -h, --help                help for track
+  -m, --idle duration       Max tolerated idle time before client enters idle state (default 10s)
+  -i, --interval duration   Interval to check for idle time (default 2s)
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----

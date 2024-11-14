@@ -3,15 +3,10 @@ package tracker
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"math/rand/v2"
-	"sort"
-	"strings"
 	"sync"
 	"time"
-
-	"github.com/fatih/color"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
@@ -41,7 +36,7 @@ func (t *Tracker) Track(ctx context.Context) {
 	t.wg.Add(1)
 	defer t.wg.Done()
 	defer func(db *sqlx.DB) {
-		log.Println("🥫 Close database in " + t.opts.AppDir)
+		log.Println("🥫 Close database in " + t.opts.AppDir())
 		_ = db.Close()
 	}(t.db) // last defer is executed first (LIFO)
 
@@ -162,92 +157,6 @@ func (t *Tracker) getRecords(ctx context.Context) (map[string][]TrackRecord, err
 		recMap[k] = append(recMap[k], r)
 	}
 	return recMap, nil
-}
-
-// Report experimental report for time tracking apps
-func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
-	recMap, err := t.getRecords(ctx)
-	if err != nil {
-		return err
-	}
-
-	// go maps are unsorted, so we have to https://yourbasic.org/golang/sort-map-keys-values/
-	dailyRecs := make([]string, 0, len(recMap))
-	for k := range recMap {
-		dailyRecs = append(dailyRecs, k)
-	}
-	sort.Strings(dailyRecs)
-
-	_, _ = fmt.Fprintf(w, "\n%s DAILY BILLY IDLE REPORT %s\n", strings.Repeat("-", 30), strings.Repeat("-", 30))
-	// Outer Loop: key days (2024-10-04)
-	for dayIdx, day := range dailyRecs {
-		lastDay := dayIdx == len(dailyRecs)-1
-
-		// inner loop: track records per day
-		recs := recMap[day]
-		first := recs[0]
-		last := recs[len(recs)-1]
-		var spentBusy, spentTotal time.Duration
-		var skippedTooShort int
-
-		// headline per day
-		color.Set(color.FgCyan, color.Bold)
-		_, _ = fmt.Fprintf(w, "🕰  %s (%s) Daily Report\n%s\n", first.BusyStart.Format("Monday January 02, 2006"), day, strings.Repeat("-", 100))
-		color.Unset()
-
-		for _, rec := range recs {
-			if rec.Duration() >= t.opts.MinBusy {
-				_, _ = fmt.Fprintln(w, rec) // print details
-				spentBusy += rec.Duration()
-			} else {
-				skippedTooShort++
-			}
-		}
-
-		if last.BusyEnd.Valid {
-			spentTotal = last.BusyEnd.Time.Sub(first.BusyStart) // last record is complete
-		} else {
-			// last record not complete, show anyway and use either start instead of end time
-			// or if this is the last record of the last day, calculate the relative time to now()
-			// since this is likely the record that is still active
-			_, _ = fmt.Fprintln(w, last)
-			if lastDay {
-				spentTotal = time.Since(first.BusyStart)
-				spentBusy += time.Since(last.BusyStart)
-			} else {
-				spentTotal = last.BusyStart.Sub(first.BusyStart)
-				// ignore incomplete record for busy calc
-			}
-		}
-		_, _ = fmt.Fprintln(w, strings.Repeat("-", 100))
-
-		kitKat := mandatoryBreak(spentBusy)
-		spentBusy = spentBusy.Round(time.Minute)
-		spentTotal = spentTotal.Round(time.Minute)
-		color.Set(color.FgGreen)
-		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
-		_, _ = fmt.Fprintf(w, "Total: %v  busy: %v  busy+break: %v  skipped(<%v): %d  overMax(%v): %v\n",
-			// first.BusyStart.Format("2006-01-02 Mon"),
-			spentTotal,
-			spentBusy,
-			(spentBusy + kitKat).Round(time.Minute),
-			t.opts.MinBusy, skippedTooShort,
-			t.opts.MaxBusy, spentBusy > t.opts.MaxBusy,
-		)
-		sugStart, _ := time.Parse("15:04", "09:00")
-
-		_, _ = fmt.Fprintf(w, "Simple Entry for %s: %v → %v (inc. %.0fm break)  overtime (>%v): %v\n",
-			first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"),
-			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),
-			kitKat.Round(time.Minute).Minutes(),
-			t.opts.RegBusy, spentBusy-t.opts.RegBusy,
-		)
-		color.Unset()
-		_, _ = fmt.Fprintln(w, strings.Repeat("=", 100))
-		_, _ = fmt.Fprintln(w, "")
-	}
-	return nil
 }
 
 func randomTask() string {
