@@ -72,15 +72,61 @@ $ launchctl unload ~/Library/LaunchAgents/com.github.tillkuhn.billy-idle.plist
 
 .CLI Usage for track subcommand
 [source,shell]
-include::docs/usage-track.adoc[]
+----
+Starts the tracker in daemon mode to record busy and idle times.
+
+Usage:
+  billy-idle track [flags]
+
+Flags:
+  -a, --app-root string     App root Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle (default "/Users/tillkuhn/.billy-idle")
+  -c, --cmd string          Command to retrieve HIDIdleTime (default "ioreg")
+      --drop-create         Drop and re-create db schema on startup
+  -e, --env string          Environment (default "dev")
+  -h, --help                help for track
+  -m, --idle duration       Max tolerated idle time before client enters idle state (default 10s)
+  -i, --interval duration   Interval to check for idle time (default 2s)
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----
+
 
 .CLI Usage for report subcommand
 [source,shell]
-include::docs/usage-report.adoc[]
+----
+Generates a report based on the recorded idle and busy times.
+
+Usage:
+  billy-idle report [flags]
+
+Flags:
+  -a, --app-root string     App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env> (default "/Users/tillkuhn/.billy-idle")
+  -e, --env string          Environment (default "default")
+  -h, --help                help for report
+      --max-busy duration   Max allowed time busy period per day (w/o breaks), report only (default 10h0m0s)
+      --min-busy duration   Minimum time for a busy record to count for the report (default 5m0s)
+      --no-color            Disable color output
+      --reg-busy duration   Regular busy period per day (w/o breaks), report only (default 7h48m0s)
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----
 
 .CLI Usage for punch subcommand
 [source,shell]
-include::docs/usage-punch.adoc[]
+----
+Punch busy time
+
+Usage:
+  billy-idle punch [flags]
+
+Flags:
+  -h, --help   help for punch
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----
 
 == Database Support
 
