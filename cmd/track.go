@@ -31,7 +31,7 @@ var trackCmd = &cobra.Command{
 		if opts.Env == "default" && strings.HasSuffix(os.Args[0], "/exe/main") {
 			opts.Env = "dev"
 		}
-		track()
+		track(cmd.Context())
 	},
 }
 
@@ -52,13 +52,12 @@ func init() {
 	trackCmd.PersistentFlags().DurationVarP(&opts.IdleTolerance, "idle", "m", 10*time.Second, "Max tolerated idle time before client enters idle state")
 }
 
-func track() {
+func track(ctx context.Context) {
 	app := filepath.Base(os.Args[0])
 	fmt.Printf("🎬 %s started version=%s built=%s pid=%d go=%s arch=%s\n", app, version, date, os.Getpid(), runtime.Version(), runtime.GOARCH)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	ctx, ctxCancel := context.WithCancel(context.Background())
 	t := tracker.New(&opts)
 	go func() {
 		t.Track(ctx)
