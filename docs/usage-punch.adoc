@@ -1,0 +1,12 @@
+----
+Punch busy time
+
+Usage:
+  billy-idle punch [flags]
+
+Flags:
+  -h, --help   help for punch
+
+Global Flags:
+  -d, --debug   Debug checkpoints
+----

@@ -107,7 +107,7 @@ report-dev: ## Show report for dev env db
 
 .PHONY: report
 report: ## Show report for default db
-	go run main.go --debug report
+	go run main.go --debug report --env default
 
 .PHONY: run-help
 run-help: ## Run app in help mode
@@ -141,3 +141,17 @@ minor: ## Create Minor Release
 	@if hash semtag 2>/dev/null; then \
 		semtag final -s minor; \
   	else echo "This target requires semtag, download from https://github.com/nico2sh/semtag"; fi
+
+.PHONY: usage
+usage: ## call main program with --help to display usage (adoc format) and create usage.adoc
+	@echo "----" > docs/usage-track.adoc
+	@go run main.go track --help | tee -a docs/usage-track.adoc
+	@echo "----" >> docs/usage-track.adoc
+
+	@echo "----" > docs/usage-punch.adoc
+	@go run main.go punch --help | tee -a docs/usage-punch.adoc
+	@echo "----" >> docs/usage-punch.adoc
+
+	@echo "----" > docs/usage-report.adoc
+	@go run main.go report --help | tee -a docs/usage-report.adoc
+	@echo "----" >> docs/usage-report.adoc

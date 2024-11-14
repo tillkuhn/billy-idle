@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -26,6 +27,11 @@ func Test_CurrentState(t *testing.T) {
 
 	assert.GreaterOrEqual(t, cs.TimeSinceLastSwitch().Milliseconds(), int64(0))
 	assert.GreaterOrEqual(t, cs.TimeSinceLastCheck().Milliseconds(), int64(0))
+}
+
+func Test_AppDir(t *testing.T) {
+	o := Options{Env: "test", AppRoot: "/tmp"}
+	assert.Equal(t, filepath.Join("/tmp", "test"), o.AppDir())
 }
 
 // Test add-break-on-top calc

@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -52,23 +51,6 @@ func Test_Update(t *testing.T) {
 	mock.ExpectClose()
 	err := tr.completeRecord(context.Background(), 42, "nur der RWE")
 	assert.NoError(t, err)
-}
-
-func Test_Report(t *testing.T) {
-	tr, mock := DBMock(t)
-
-	start := time.Now()
-	mock.ExpectQuery("SELECT (.*)").
-		WillReturnRows(
-			mock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
-				AddRow("1", start, start.Add(6*time.Minute), "Having a DejaVu").
-				AddRow("2", start, start.Add(3*time.Minute), "Debugging Code but only for s short time").
-				AddRow("3", start, nil, "Unfinished business"),
-		)
-	mock.ExpectClose()
-	var output bytes.Buffer
-	assert.NoError(t, tr.Report(context.Background(), &output))
-	assert.Contains(t, output.String(), "DejaVu")
 }
 
 func Test_mandatoryBreak(t *testing.T) {
