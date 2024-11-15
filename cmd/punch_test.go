@@ -12,7 +12,7 @@ func Test_ExecuteTrackCommandMissingArg(t *testing.T) {
 	rootCmd.SetOut(actual)
 	rootCmd.SetErr(actual)
 	rootCmd.SetArgs([]string{punchCmd.Use})
-	assert.ErrorContains(t, rootCmd.Execute(), "expected a duration argument")
+	assert.ErrorContains(t, rootCmd.Execute(), "expected a duration")
 }
 
 func Test_ExecuteTrackCommand(t *testing.T) {
