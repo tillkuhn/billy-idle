@@ -37,7 +37,7 @@ func Test_Insert(t *testing.T) {
 		WillReturnRows(mock.NewRows([]string{"id"}).
 			AddRow("42"))
 	mock.ExpectClose()
-	id, err := tr.newRecord(context.Background(), "nur der RWE")
+	id, err := tr.newTrackRecord(context.Background(), "nur der RWE")
 	assert.NoError(t, err)
 	assert.Equal(t, 42, id)
 }
@@ -49,7 +49,7 @@ func Test_Update(t *testing.T) {
 	// Error row: https://github.com/DATA-DOG/go-sqlmock/blob/master/rows_test.go#L53
 	mock.ExpectExec(sql1).WithArgs(sqlmock.AnyArg(), "nur der RWE", 42).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectClose()
-	err := tr.completeRecord(context.Background(), 42, "nur der RWE")
+	err := tr.completeTrackRecord(context.Background(), 42, "nur der RWE")
 	assert.NoError(t, err)
 }
 

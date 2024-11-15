@@ -40,7 +40,7 @@ type TrackRecord struct {
 func (t TrackRecord) String() string {
 	var verb, to string
 	if t.BusyEnd.Valid {
-		verb = "Spent " + t.Duration().String()
+		verb = "Spent " + fDur(t.Duration())
 		to = t.BusyEnd.Time.Format("15:04:05")
 	} else {
 		verb = "Still busy with"

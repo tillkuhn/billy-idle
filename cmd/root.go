@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"context"
+	"log"
 	"os"
+	"strings"
+	"testing"
 
 	"github.com/spf13/cobra"
 )
@@ -40,20 +43,25 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	rootCmd.PersistentFlags().BoolVarP(&trackOpts.Debug, "debug", "d", false, "Debug checkpoints")
+}
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.billy-idle.yaml)")
+// defaultAppRoot returns the default app root directory
+func defaultAppRoot() string {
+	home, err := os.UserHomeDir() // $HOME on *nix
+	if err != nil {
+		log.Fatal(err)
+	}
+	return home + string(os.PathSeparator) + ".billy-idle"
+}
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-
-	// A flag can be 'persistent', meaning that this flag will be available to the command it's assigned to as well
-	// as every command under that command.
-
-	// For global flags, assign a flag as a persistent flag on the root.
-	rootCmd.PersistentFlags().BoolVarP(&opts.Debug, "debug", "d", false, "Debug checkpoints")
-
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+// defaultEnv returns the default environment directory depending on whether we're running in test mode or with go run
+// example arg for go run ...: /var/folders/9w/4543534/T/go-build1898714561/b001/exe/main
+func defaultEnv() string {
+	if testing.Testing() { // https://stackoverflow.com/a/78532310/4292075
+		return "test"
+	} else if strings.HasSuffix(os.Args[0], "/exe/main") {
+		return "dev"
+	}
+	return "default"
 }

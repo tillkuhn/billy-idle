@@ -25,12 +25,12 @@ var punchCmd = &cobra.Command{
 			return fmt.Errorf("expected a duration argument: %w", errArg)
 		}
 		fmt.Println("enter busy time=" + args[0])
-		t := tracker.New(&opts)
+		t := tracker.New(&trackOpts)
 		bt, err := strconv.Atoi(args[0])
 		if err != nil {
 			return err
 		}
-		if err := t.UpsertBusyRecord(context.Background(), bt*secsPerHour); err != nil {
+		if err := t.UpsertPunchRecord(context.Background(), bt*secsPerHour); err != nil {
 			log.Println(err)
 		}
 
