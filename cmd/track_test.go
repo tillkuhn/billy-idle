@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,10 +16,4 @@ func Test_ExecuteTrackerCommandHelp(t *testing.T) {
 	assert.NoError(t, rootCmd.Execute())
 	expected := "Starts the tracker in daemon mode"
 	assert.Contains(t, actual.String(), expected, "actual is not expected")
-}
-
-func Test_DefaultAppRoot(t *testing.T) {
-	h, err := os.UserHomeDir()
-	assert.NoError(t, err)
-	assert.Equal(t, defaultAppRoot(), h+"/.billy-idle")
 }

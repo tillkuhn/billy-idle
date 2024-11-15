@@ -50,7 +50,7 @@ func (t *Tracker) Track(ctx context.Context) {
 		case <-ctx.Done():
 			// make sure latest status is written to db, must use a fresh context
 			msg := fmt.Sprintf("🛑 Tracker stopped after %v %s time", ist.TimeSinceLastSwitch(), ist.State())
-			_ = t.completeRecord(context.Background(), ist.id, msg)
+			_ = t.completeTrackRecord(context.Background(), ist.id, msg)
 			done = true
 		default:
 			idleMillis, err := IdleTime(ctx, t.opts.Cmd)
@@ -61,19 +61,19 @@ func (t *Tracker) Track(ctx context.Context) {
 				busySince := ist.TimeSinceLastSwitch()
 				ist.SwitchState()
 				msg := fmt.Sprintf("%s Enter idle mode after %v busy time", ist.Icon(), busySince)
-				_ = t.completeRecord(ctx, ist.id, msg)
+				_ = t.completeTrackRecord(ctx, ist.id, msg)
 			case ist.ExceedsCheckTolerance(t.opts.IdleTolerance):
 				ist.SwitchState()
 				msg := fmt.Sprintf("%s Enter idle mode after sleep mode was detected at %s (%v ago)",
 					ist.Icon(), ist.lastCheck.Format(time.RFC3339), ist.TimeSinceLastCheck())
 				// We have to date back the end of the Busy period to the last known active check
 				// Oh, you have to love Go's time and duration handling: https://stackoverflow.com/a/26285835/4292075
-				_ = t.completeRecordWithTime(ctx, ist.id, msg, time.Now().Add(ist.TimeSinceLastCheck()*-1))
+				_ = t.completeTrackRecordWithTime(ctx, ist.id, msg, time.Now().Add(ist.TimeSinceLastCheck()*-1))
 			case ist.IsBusy(idleMillis, t.opts.IdleTolerance):
 				idleSince := ist.TimeSinceLastSwitch()
 				ist.SwitchState()
 				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", ist.Icon(), idleSince)
-				ist.id, _ = t.newRecord(ctx, msg)
+				ist.id, _ = t.newTrackRecord(ctx, msg)
 			}
 			t.checkpoint(ist, idleMillis) // outputs current state details if debug is enabled
 			ist.lastCheck = time.Now()
@@ -103,8 +103,8 @@ func (t *Tracker) checkpoint(ist IdleState, idleMillis int64) {
 	}
 }
 
-// newRecord inserts a new tracking records
-func (t *Tracker) newRecord(ctx context.Context, msg string) (int, error) {
+// newTrackRecord inserts a new tracking records
+func (t *Tracker) newTrackRecord(ctx context.Context, msg string) (int, error) {
 	statement, err := t.db.PrepareContext(ctx, `INSERT INTO track(message,client,task,busy_start) VALUES (?,?,?,?) RETURNING id;`)
 	if err != nil {
 		return 0, err
@@ -120,13 +120,13 @@ func (t *Tracker) newRecord(ctx context.Context, msg string) (int, error) {
 	return id, err
 }
 
-// completeRecord finishes the active record using time.Now() as period end
-func (t *Tracker) completeRecord(ctx context.Context, id int, msg string) error {
-	return t.completeRecordWithTime(ctx, id, msg, time.Now())
+// completeTrackRecord finishes the active record using time.Now() as period end
+func (t *Tracker) completeTrackRecord(ctx context.Context, id int, msg string) error {
+	return t.completeTrackRecordWithTime(ctx, id, msg, time.Now())
 }
 
-// completeRecord finishes the active record using the provided datetime as period end
-func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
+// completeTrackRecord finishes the active record using the provided datetime as period end
+func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
 	// don't use sql ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
 	statement, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
 	if err != nil {
@@ -141,8 +141,8 @@ func (t *Tracker) completeRecordWithTime(ctx context.Context, id int, msg string
 	return err
 }
 
-// getRecords retried existing track records for a specific time period
-func (t *Tracker) getRecords(ctx context.Context) (map[string][]TrackRecord, error) {
+// trackRecords retried existing track records for a specific time period
+func (t *Tracker) trackRecords(ctx context.Context) (map[string][]TrackRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found

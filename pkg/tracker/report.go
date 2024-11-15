@@ -17,7 +17,7 @@ const sepLineLen = 100
 
 // Report experimental report for time tracking apps
 func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
-	recMap, err := t.getRecords(ctx)
+	recMap, err := t.trackRecords(ctx)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,6 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	}
 	sort.Strings(dailyRecs)
 
-	_, _ = fmt.Fprintf(w, "\n%s DAILY BILLY IDLE REPORT %s\n", strings.Repeat("-", 30), strings.Repeat("-", 30))
 	// Outer Loop: key days (2024-10-04)
 	for dayIdx, day := range dailyRecs {
 		lastDay := dayIdx == len(dailyRecs)-1
@@ -88,8 +87,8 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
 
-		_, _ = fmt.Fprintf(w, "Simple Entry for %s: %v → %v (inc. break)  Overtime(>%v): %v\n",
-			first.BusyStart.Format("Monday"),
+		_, _ = fmt.Fprintf(w, "Simplified Entry: %v → %v (inc. break)  Overtime(>%v): %v\n",
+			// first.BusyStart.Format("Monday"),
 			sugStart.Format("15:04"),
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),
 			fDur(t.opts.RegBusy), fDur(spentBusy-t.opts.RegBusy),
@@ -101,6 +100,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	return nil
 }
 
+// fDur formats a duration to a human readable string with hours (if > 0) and minutes
 func fDur(d time.Duration) string {
 	switch {
 	case d.Hours() > 0:

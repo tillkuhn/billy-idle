@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS track (
  "task" TEXT,
  "client" TEXT );
 
-CREATE TABLE IF NOT EXISTS busy (
+CREATE TABLE IF NOT EXISTS punch (
  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
  "day" DATE NOT NULL DEFAULT (current_date),
  "busy_secs" INTEGER NOT NULL DEFAULT 0,

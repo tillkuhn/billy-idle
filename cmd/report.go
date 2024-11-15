@@ -13,6 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// reportOpts represents options to configure the report subcommand
+var reportOpts tracker.Options
+
 // reportCmd represents the report command
 var reportCmd = &cobra.Command{
 	Use:   "report",
@@ -31,15 +34,15 @@ var reportCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(reportCmd)
 	reportCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
-	reportCmd.PersistentFlags().StringVarP(&opts.Env, "env", "e", "default", "Environment")
-	reportCmd.PersistentFlags().StringVarP(&opts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
-	reportCmd.PersistentFlags().DurationVar(&opts.MinBusy, "min-busy", 5*time.Minute, "Minimum time for a busy record to count for the report")
-	reportCmd.PersistentFlags().DurationVar(&opts.MaxBusy, "max-busy", 10*time.Hour, "Max allowed time busy period per day (w/o breaks), report only")
-	reportCmd.PersistentFlags().DurationVar(&opts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
+	reportCmd.PersistentFlags().StringVarP(&reportOpts.Env, "env", "e", defaultEnv(), "Environment")
+	reportCmd.PersistentFlags().StringVarP(&reportOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
+	reportCmd.PersistentFlags().DurationVar(&reportOpts.MinBusy, "min-busy", 5*time.Minute, "Minimum time for a busy record to count for the report")
+	reportCmd.PersistentFlags().DurationVar(&reportOpts.MaxBusy, "max-busy", 10*time.Hour, "Max allowed time busy period per day (w/o breaks), report only")
+	reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }
 
 func run(ctx context.Context) {
-	t := tracker.New(&opts)
+	t := tracker.New(&reportOpts)
 	if err := t.Report(ctx, os.Stdout); err != nil {
 		log.Println(err)
 	}

@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
@@ -16,7 +15,8 @@ import (
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
-var opts tracker.Options
+// trackOpts represents options to configure the tracker instance
+var trackOpts tracker.Options
 
 // trackCmd represents the track command
 var trackCmd = &cobra.Command{
@@ -25,12 +25,7 @@ var trackCmd = &cobra.Command{
 	Long:  `Starts the tracker in daemon mode to record busy and idle times.`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		dbg, _ := cmd.Flags().GetBool("debug")
-		opts.Debug = dbg
-		// auto default to dev env if run with go run (...)
-		// example arg: /var/folders/9w/4543534/T/go-build1898714561/b001/exe/main
-		if opts.Env == "default" && strings.HasSuffix(os.Args[0], "/exe/main") {
-			opts.Env = "dev"
-		}
+		trackOpts.Debug = dbg
 		track(cmd.Context())
 	},
 }
@@ -40,16 +35,12 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// Cobra supports local flags which will only run when this command
 	rootCmd.AddCommand(trackCmd)
-	defaultEnv := "default"
-	if strings.HasSuffix(os.Args[0], "/exe/main") {
-		defaultEnv = "dev"
-	}
-	trackCmd.PersistentFlags().StringVarP(&opts.Env, "env", "e", defaultEnv, "Environment")
-	trackCmd.PersistentFlags().StringVarP(&opts.AppRoot, "app-root", "a", defaultAppRoot(), "App root Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle")
-	trackCmd.PersistentFlags().StringVarP(&opts.Cmd, "cmd", "c", "ioreg", "Command to retrieve HIDIdleTime")
-	trackCmd.PersistentFlags().BoolVar(&opts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
-	trackCmd.PersistentFlags().DurationVarP(&opts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
-	trackCmd.PersistentFlags().DurationVarP(&opts.IdleTolerance, "idle", "m", 10*time.Second, "Max tolerated idle time before client enters idle state")
+	trackCmd.PersistentFlags().StringVarP(&trackOpts.Env, "env", "e", defaultEnv(), "Environment")
+	trackCmd.PersistentFlags().StringVarP(&trackOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App root Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle")
+	trackCmd.PersistentFlags().StringVarP(&trackOpts.Cmd, "cmd", "c", "ioreg", "Command to retrieve HIDIdleTime")
+	trackCmd.PersistentFlags().BoolVar(&trackOpts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
+	trackCmd.PersistentFlags().DurationVarP(&trackOpts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
+	trackCmd.PersistentFlags().DurationVarP(&trackOpts.IdleTolerance, "idle", "m", 10*time.Second, "Max tolerated idle time before client enters idle state")
 }
 
 func track(ctx context.Context) {
@@ -58,7 +49,7 @@ func track(ctx context.Context) {
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	t := tracker.New(&opts)
+	t := tracker.New(&trackOpts)
 	go func() {
 		t.Track(ctx)
 	}()
@@ -67,12 +58,4 @@ func track(ctx context.Context) {
 	log.Printf("🔫 Received signal %v, initiate shutdown", sig)
 	ctxCancel()
 	t.WaitClose()
-}
-
-func defaultAppRoot() string {
-	home, err := os.UserHomeDir() // $HOME on *nix
-	if err != nil {
-		log.Fatal(err)
-	}
-	return home + string(os.PathSeparator) + ".billy-idle"
 }
