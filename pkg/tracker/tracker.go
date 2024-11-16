@@ -146,24 +146,6 @@ func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg s
 	return err
 }
 
-// trackRecords retried existing track records for a specific time period
-func (t *Tracker) trackRecords(ctx context.Context) (map[string][]TrackRecord, error) {
-	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
-	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
-	// We could use get since we expect a single result, but this would return an error if nothing is found
-	// which is a likely use case
-	var records []TrackRecord
-	if err := t.db.SelectContext(ctx, &records, query /*, args*/); err != nil {
-		return nil, err
-	}
-	recMap := map[string][]TrackRecord{}
-	for _, r := range records {
-		k := r.BusyStart.Format("2006-01-02") // go ref Mon Jan 2 15:04:05 -0700 MST 2006
-		recMap[k] = append(recMap[k], r)
-	}
-	return recMap, nil
-}
-
 func randomTask() string {
 	// r := rand.IntN(3)
 	switch rand.IntN(4) {

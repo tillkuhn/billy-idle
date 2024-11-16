@@ -36,11 +36,16 @@ type TrackRecord struct {
 	Client    string       `db:"client"`
 }
 
+type PunchRecord struct {
+	Day      time.Time `db:"day"`
+	BusySecs float64   `db:"busy_secs"`
+}
+
 // String returns a string representation of the TrackRecord
 func (t TrackRecord) String() string {
 	var verb, to string
 	if t.BusyEnd.Valid {
-		verb = "Spent " + fDur(t.Duration())
+		verb = "Spent " + FDur(t.Duration())
 		to = t.BusyEnd.Time.Format("15:04:05")
 	} else {
 		verb = "Still busy with"
