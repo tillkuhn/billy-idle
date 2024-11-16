@@ -25,6 +25,11 @@ func New(opts *Options) *Tracker {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return NewWithDB(opts, db)
+}
+
+// NewWithDB returns a new Tracker configured with the given Options and DB, good for testing
+func NewWithDB(opts *Options, db *sqlx.DB) *Tracker {
 	return &Tracker{
 		opts: opts,
 		db:   db,

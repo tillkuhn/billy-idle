@@ -2,48 +2,37 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
-const secsPerHour = 60 * 60
-
-var errArg = errors.New("argument error")
-
 // punchCmd represents the busy command
 var punchCmd = &cobra.Command{
-	Use:   "punch",
-	Short: "Punch busy time",
-	Long:  ``,
+	Use:     "punch",
+	Short:   "Punch the clock - enter actual busy time",
+	Example: "punch 10h5m 2024-11-07",
+	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+	Long:    ``,
 	RunE: func(_ *cobra.Command, args []string) error {
 		var err error
 		var day time.Time
-		switch len(args) {
-		case 0:
-			return fmt.Errorf("%w: expected a duration and optional day argument", errArg)
-		case 1:
-			day = time.Now()
-		case 2:
+		day = time.Now()
+		if len(args) == 2 {
 			day, err = time.Parse("2006-01-02", args[1])
 			if err != nil {
 				return err
 			}
-		default:
-			return fmt.Errorf("%w: to many arguments", errArg)
 		}
-		fmt.Println("enter busy time=" + args[0])
-		t := tracker.New(&trackOpts)
-		bt, err := strconv.Atoi(args[0])
+		dur, err := time.ParseDuration(args[0])
+		fmt.Printf("🕰️ Punching busy time=%s for day %s\n", dur, day.Format("2006-01-02 (Monday)"))
 		if err != nil {
 			return err
 		}
-		dur := time.Second * time.Duration(bt) * secsPerHour
+		t := tracker.New(&trackOpts)
 		if err := t.UpsertPunchRecord(context.Background(), dur, day); err != nil {
 			log.Println(err)
 		}

@@ -28,7 +28,7 @@ func Test_Tracker(t *testing.T) {
 		CheckInterval: 100 * time.Millisecond,
 		IdleTolerance: 150 * time.Millisecond, // fixed mock value is 125ms
 		AppRoot:       dir,                    // overwrite with tempdir
-		Cmd:           "pkg/tracker/ioreg_mock.sh",
+		Cmd:           "testdata/ioreg_mock.sh",
 		Debug:         true,
 		DropCreate:    true,
 	}
