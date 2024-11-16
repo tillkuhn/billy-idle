@@ -17,7 +17,7 @@ func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Durat
 	uQuery := `UPDATE ` + tablePunch + `
 			   SET busy_secs=$2,client=$3
                WHERE day=$1`
-	day = truncateDay(day) // https://stackoverflow.com/a/38516536/4292075
+	day = TruncateDay(day) // https://stackoverflow.com/a/38516536/4292075
 	uRes, err := t.db.ExecContext(ctx, uQuery, day, busyDuration.Seconds(), t.opts.ClientID)
 	if err != nil {
 		return errors.Wrap(err, "unable to update busy table")
@@ -48,8 +48,4 @@ func (t *Tracker) PunchRecords(ctx context.Context) ([]PunchRecord, error) {
 		return nil, err
 	}
 	return records, nil
-}
-
-func truncateDay(t time.Time) time.Time {
-	return t.Truncate(hoursPerDay * time.Hour).UTC()
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"sort"
 	"strings"
 	"time"
@@ -116,17 +115,4 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		_, _ = fmt.Fprintln(w, "")
 	}
 	return nil
-}
-
-// FDur formats a duration to a human-readable string with hours (if > 0) and minutes
-func FDur(d time.Duration) string {
-	switch {
-	case d.Hours() > 0:
-		return fmt.Sprintf("%dh%dm", int(d.Hours()), int(d.Minutes())%minPerHour)
-	case d.Hours() < 0:
-
-		return fmt.Sprintf("%dh%dm", int(d.Hours()), int(math.Abs(d.Minutes()))%minPerHour)
-	default:
-		return fmt.Sprintf("%dm", int(d.Minutes()))
-	}
 }
