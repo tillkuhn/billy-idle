@@ -13,6 +13,6 @@ func Test_DefaultAppRoot(t *testing.T) {
 	assert.Equal(t, defaultAppRoot(), h+"/.billy-idle")
 }
 
-func Test_DefaultEnd(t *testing.T) {
+func Test_DefaultEnv(t *testing.T) {
 	assert.Equal(t, defaultEnv(), "test")
 }
