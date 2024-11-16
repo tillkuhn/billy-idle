@@ -11,7 +11,7 @@ import (
 
 func Test_UpsertPunchUpdate(t *testing.T) {
 	tracker, mock := DBMock(t)
-	day := truncateDay(time.Now())
+	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
 	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test").
@@ -22,7 +22,7 @@ func Test_UpsertPunchUpdate(t *testing.T) {
 
 func Test_UpsertPunchInsert(t *testing.T) {
 	tracker, mock := DBMock(t)
-	day := truncateDay(time.Now())
+	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
 	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test").
@@ -38,7 +38,7 @@ func Test_UpsertPunchInsert(t *testing.T) {
 func Test_SelectPunch(t *testing.T) {
 	tr, mock := DBMock(t)
 
-	today := truncateDay(time.Now())
+	today := TruncateDay(time.Now())
 	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
 			mock.NewRows([]string{"day", "busy_secs"}).
