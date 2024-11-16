@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
+
+var punchOpts tracker.Options
 
 // punchCmd represents the busy command
 var punchCmd = &cobra.Command{
@@ -17,7 +17,7 @@ var punchCmd = &cobra.Command{
 	Example: "punch 10h5m 2024-11-07",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 	Long:    ``,
-	RunE: func(_ *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		var day time.Time
 		day = time.Now()
@@ -33,14 +33,33 @@ var punchCmd = &cobra.Command{
 			return err
 		}
 		t := tracker.New(&trackOpts)
-		if err := t.UpsertPunchRecord(context.Background(), dur, day); err != nil {
-			log.Println(err)
+		if err := t.UpsertPunchRecord(cmd.Context(), dur, day); err != nil {
+			return err
 		}
 
+		// show status
+		recs, err := t.PunchRecords(cmd.Context())
+		if err != nil {
+			return err
+		}
+		var spentBusy time.Duration
+		for _, r := range recs {
+			spentDay := time.Duration(r.BusySecs) * time.Second
+			fmt.Printf("🕰️ %s: actual busy time %v\n", r.Day.Format("2006-01-02"), spentDay)
+			spentBusy += spentDay
+		}
+		spentBusy = spentBusy.Round(time.Minute)
+		pDays := len(recs)
+		expected := time.Duration(pDays) * punchOpts.RegBusy
+		overtime := spentBusy - expected
+		fmt.Printf("TotalBusy(%dd): %v   AvgPerDay: %v  Expected(%dd*%v): %v   Overtime: %v\n",
+			pDays, tracker.FDur(spentBusy), tracker.FDur(spentBusy/time.Duration(pDays)),
+			pDays, tracker.FDur(punchOpts.RegBusy), tracker.FDur(expected), tracker.FDur(overtime))
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(punchCmd)
+	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }

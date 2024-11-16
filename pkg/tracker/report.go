@@ -15,6 +15,24 @@ import (
 const minPerHour = 60
 const sepLineLen = 100
 
+// trackRecords retried existing track records for a specific time period
+func (t *Tracker) trackRecords(ctx context.Context) (map[string][]TrackRecord, error) {
+	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
+	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
+	// We could use get since we expect a single result, but this would return an error if nothing is found
+	// which is a likely use case
+	var records []TrackRecord
+	if err := t.db.SelectContext(ctx, &records, query /*, args*/); err != nil {
+		return nil, err
+	}
+	recMap := map[string][]TrackRecord{}
+	for _, r := range records {
+		k := r.BusyStart.Format("2006-01-02") // go ref Mon Jan 2 15:04:05 -0700 MST 2006
+		recMap[k] = append(recMap[k], r)
+	}
+	return recMap, nil
+}
+
 // Report experimental report for time tracking apps
 func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	recMap, err := t.trackRecords(ctx)
@@ -78,12 +96,12 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
 		_, _ = fmt.Fprintf(w, "Busy: %s  WithBreak(%vm): %s  Skipped(<%v): %d  >Max(%s): %v  Range: %s\n",
 			// first.BusyStart.Format("2006-01-02 Mon"),
-			fDur(spentBusy),
+			FDur(spentBusy),
 			kitKat.Round(time.Minute).Minutes(),
-			fDur((spentBusy + kitKat).Round(time.Minute)),
-			fDur(t.opts.MinBusy), skippedTooShort,
-			fDur(t.opts.MaxBusy), spentBusy > t.opts.MaxBusy,
-			fDur(spentTotal),
+			FDur((spentBusy + kitKat).Round(time.Minute)),
+			FDur(t.opts.MinBusy), skippedTooShort,
+			FDur(t.opts.MaxBusy), spentBusy > t.opts.MaxBusy,
+			FDur(spentTotal),
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
 
@@ -91,7 +109,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			// first.BusyStart.Format("Monday"),
 			sugStart.Format("15:04"),
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),
-			fDur(t.opts.RegBusy), fDur(spentBusy-t.opts.RegBusy),
+			FDur(t.opts.RegBusy), FDur(spentBusy-t.opts.RegBusy),
 		)
 		color.Unset()
 		_, _ = fmt.Fprintln(w, strings.Repeat("=", sepLineLen))
@@ -100,8 +118,8 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 	return nil
 }
 
-// fDur formats a duration to a human readable string with hours (if > 0) and minutes
-func fDur(d time.Duration) string {
+// FDur formats a duration to a human-readable string with hours (if > 0) and minutes
+func FDur(d time.Duration) string {
 	switch {
 	case d.Hours() > 0:
 		return fmt.Sprintf("%dh%dm", int(d.Hours()), int(d.Minutes())%minPerHour)
