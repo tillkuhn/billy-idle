@@ -24,6 +24,7 @@ var punchCmd = &cobra.Command{
 				return err
 			}
 		}
+		punchOpts.Out = rootCmd.OutOrStdout()
 		t := tracker.New(&punchOpts)
 		return t.PunchReport(cmd.Context())
 	},

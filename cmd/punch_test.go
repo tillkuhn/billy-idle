@@ -34,6 +34,16 @@ func TestSum(t *testing.T) {
 			"",
 			"cannot parse",
 		},
+		"ok-2-args": {
+			[]string{"4h5m", "2024-11-11"},
+			"Monday",
+			"",
+		},
+		"ok-1-arg": {
+			[]string{"4h5m"},
+			"Monday",
+			"",
+		},
 	}
 
 	for name, te := range tests {
@@ -45,6 +55,8 @@ func TestSum(t *testing.T) {
 			err := rootCmd.Execute()
 			if te.error != "" {
 				assert.ErrorContains(t, err, te.error)
+			} else {
+				assert.NoError(t, err)
 			}
 			assert.Contains(t, actual.String(), te.out)
 		})
