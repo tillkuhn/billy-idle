@@ -2,8 +2,13 @@ package tracker
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/pkg/errors"
 )
@@ -12,6 +17,53 @@ const (
 	tablePunch  = "punch"
 	hoursPerDay = 24
 )
+
+// PunchReport displays the current punch report table layout
+func (t *Tracker) PunchReport(ctx context.Context) error {
+	recs, err := t.PunchRecords(ctx)
+	if err != nil {
+		return err
+	}
+	var spentBusy time.Duration
+	table := tablewriter.NewWriter(t.opts.Out)
+	bold := tablewriter.Colors{tablewriter.Bold}
+	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy Time"})
+	table.SetHeaderColor(bold, bold, bold, bold)
+	table.SetBorder(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+
+	for _, r := range recs {
+		spentDay := time.Duration(r.BusySecs) * time.Second
+		_, week := r.Day.ISOWeek()
+		table.Append([]string{
+			r.Day.Format(" 2006-01-02"),
+			strconv.Itoa(week),
+			r.Day.Format("Monday"),
+			FDur(spentDay),
+		})
+		spentBusy += spentDay
+	}
+
+	spentBusy = spentBusy.Round(time.Minute)
+	pDays := len(recs)
+	expected := time.Duration(pDays) * t.opts.RegBusy
+	overtime := spentBusy - expected
+
+	// Table Footer with totals
+	table.SetFooter([]string{"", "", "Total\nOvertime",
+		fmt.Sprintf("%s (%ddays)\n%v (>%v)", FDur(spentBusy), pDays, FDur(overtime), FDur(expected)),
+	}) // Add Footer
+	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{}, bold,
+		tablewriter.Colors{tablewriter.FgHiGreenColor})
+	table.Render()
+
+	color.Set(color.FgGreen)
+	// fmt.Printf("AVG/DAY: %v  REGULAR (%dd*%v): %v\n", tracker.FDur(spentBusy/time.Duration(pDays)),  pDays, tracker.FDur(punchOpts.RegBusy) )
+	color.Unset()
+
+	return nil
+}
 
 func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Duration, day time.Time) error {
 	uQuery := `UPDATE ` + tablePunch + `

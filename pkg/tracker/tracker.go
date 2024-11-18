@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"os"
 	"sync"
 	"time"
 
@@ -21,6 +22,9 @@ type Tracker struct {
 
 // New returns a new Tracker configured with the given Options
 func New(opts *Options) *Tracker {
+	if opts.Out == nil {
+		opts.Out = os.Stdout
+	}
 	db, err := initDB(opts)
 	if err != nil {
 		log.Fatal(err)

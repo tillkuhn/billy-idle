@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -49,4 +50,24 @@ func Test_SelectPunch(t *testing.T) {
 	recs, err := tr.PunchRecords(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(recs))
+}
+
+func Test_PunchReport(t *testing.T) {
+	tr, mock := DBMock(t)
+	var output bytes.Buffer
+	tr.opts.Out = &output
+
+	day, err := time.Parse("2006-01-02 15:04:05", "2024-01-23 13:14:15") // is a tuesday
+	assert.NoError(t, err)
+	day = TruncateDay(day)
+	mock.ExpectQuery("SELECT (.*)").
+		WillReturnRows(
+			mock.NewRows([]string{"day", "busy_secs"}).
+				AddRow(day, 3600).
+				AddRow(day, 7200),
+		)
+	mock.ExpectClose()
+	err = tr.PunchReport(context.Background())
+	assert.NoError(t, err)
+	assert.Contains(t, output.String(), "Tuesday")
 }
