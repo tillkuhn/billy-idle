@@ -16,7 +16,7 @@ var punchOpts tracker.Options
 // punchCmd represents the busy command
 var punchCmd = &cobra.Command{
 	Use:     "punch",
-	Short:   "Punch the clock - enter actual busy time",
+	Short:   "Punch the clock - enter or display actual busy time",
 	Example: "punch 10h5m 2024-11-07",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(0), cobra.MaximumNArgs(2)),
 	Long:    "If no args are provided, the current status for all punched records will be shown",
