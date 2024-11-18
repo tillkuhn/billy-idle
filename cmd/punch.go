@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fatih/color"
-
 	"github.com/spf13/cobra"
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
@@ -22,9 +20,12 @@ var punchCmd = &cobra.Command{
 	Long:    "If no args are provided, the current status for all punched records will be shown",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
-			return punchCreate(cmd.Context(), args)
+			if err := punchCreate(cmd.Context(), args); err != nil {
+				return err
+			}
 		}
-		return punchReport(cmd.Context(), tracker.New(&punchOpts))
+		t := tracker.New(&punchOpts)
+		return t.PunchReport(cmd.Context())
 	},
 }
 
@@ -35,6 +36,7 @@ func init() {
 	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }
 
+// punchCreate creates a new punch record for a particular day
 func punchCreate(ctx context.Context, args []string) error {
 	var err error
 	var day time.Time
@@ -51,32 +53,7 @@ func punchCreate(ctx context.Context, args []string) error {
 		return err
 	}
 	t := tracker.New(&punchOpts)
-	if err := t.UpsertPunchRecord(ctx, dur, day); err != nil {
-		return err
-	}
-	// show current report at the end of each new entry
-	return punchReport(ctx, t)
+	return t.UpsertPunchRecord(ctx, dur, day)
 }
 
-func punchReport(ctx context.Context, t *tracker.Tracker) error {
-	recs, err := t.PunchRecords(ctx)
-	if err != nil {
-		return err
-	}
-	var spentBusy time.Duration
-	for _, r := range recs {
-		spentDay := time.Duration(r.BusySecs) * time.Second
-		fmt.Printf("🕰️ %-22s: actual busy time %v\n", r.Day.Format("2006-01-02 (Monday)"), spentDay)
-		spentBusy += spentDay
-	}
-	spentBusy = spentBusy.Round(time.Minute)
-	pDays := len(recs)
-	expected := time.Duration(pDays) * punchOpts.RegBusy
-	overtime := spentBusy - expected
-	color.Set(color.FgGreen)
-	fmt.Printf("TotalBusy(%dd): %v   AvgPerDay: %v  Expected(%dd*%v): %v   Overtime: %v\n",
-		pDays, tracker.FDur(spentBusy), tracker.FDur(spentBusy/time.Duration(pDays)),
-		pDays, tracker.FDur(punchOpts.RegBusy), tracker.FDur(expected), tracker.FDur(overtime))
-	color.Unset()
-	return nil
-}
+// punchReport displays the current punch report

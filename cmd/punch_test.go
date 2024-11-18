@@ -2,14 +2,8 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"slices"
 	"testing"
-	"time"
-
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
-	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -55,23 +49,6 @@ func TestSum(t *testing.T) {
 			assert.Contains(t, actual.String(), te.out)
 		})
 	}
-}
-
-func Test_PunchReport(t *testing.T) {
-	mockDB, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
-	today := tracker.TruncateDay(time.Now())
-	mock.ExpectQuery("SELECT (.*)").
-		WillReturnRows(
-			mock.NewRows([]string{"day", "busy_secs"}).
-				AddRow(today, 3600).
-				AddRow(today, 7200),
-		)
-	mock.ExpectClose()
-	tr := tracker.NewWithDB(&punchOpts, sqlxDB)
-	err = punchReport(context.Background(), tr)
-	assert.NoError(t, err)
 }
 
 /*

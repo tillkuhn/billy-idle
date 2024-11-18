@@ -3,6 +3,7 @@ package tracker
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"path/filepath"
 	"time"
 )
@@ -20,6 +21,7 @@ type Options struct {
 	MinBusy       time.Duration
 	MaxBusy       time.Duration
 	RegBusy       time.Duration
+	Out           io.Writer
 }
 
 func (o Options) AppDir() string {
