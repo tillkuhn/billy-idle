@@ -21,7 +21,7 @@ var trackOpts tracker.Options
 // trackCmd represents the track command
 var trackCmd = &cobra.Command{
 	Use:   "track",
-	Short: "Track idle time",
+	Short: "Track idle time in the background",
 	Long:  `Starts the tracker in daemon mode to record busy and idle times.`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		dbg, _ := cmd.Flags().GetBool("debug")
