@@ -21,7 +21,11 @@ var initSQL string
 
 // initDB initializes SQLite DB in local filesystem
 func initDB(opts *Options) (*sqlx.DB, error) {
+	if err := os.MkdirAll(opts.AppDir(), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("cannot create app dir %s: %w", opts.AppDir(), err)
+	}
 	dbFile := filepath.Join(opts.AppDir(), "db.sqlite3")
+
 	log.Printf("🥫 Open database file=%s sqlite=%s", dbFile, sqlite3.SQLITE_VERSION)
 	db, err := sqlx.Open("sqlite", dbFile)
 	if err != nil {
