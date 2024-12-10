@@ -104,11 +104,12 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
 
-		_, _ = fmt.Fprintf(w, "Simplified Entry: %v → %v (inc. break)  Overtime(>%v): %v\n",
+		_, _ = fmt.Fprintf(w, "Simplified Entry: %v → %v (inc. break)  Overtime(>%v): %v utilMax(%v): %v\n",
 			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"),
-			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),
-			FDur(t.opts.RegBusy), FDur(spentBusy-t.opts.RegBusy),
+			sugStart.Format("15:04"), // Simplified start
+			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
+			FDur(t.opts.RegBusy) /* reg busy time e.g. 7:48 */, FDur(spentBusy-t.opts.RegBusy), // overtime
+			FDur(t.opts.MaxBusy), FDur(t.opts.MaxBusy-spentBusy),
 		)
 		color.Unset()
 		_, _ = fmt.Fprintln(w, strings.Repeat("=", sepLineLen))
