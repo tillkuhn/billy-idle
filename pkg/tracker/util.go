@@ -11,25 +11,25 @@ func TruncateDay(t time.Time) time.Time {
 	return t.Truncate(hoursPerDay * time.Hour).UTC()
 }
 
-// FDur formats a duration to a human-readable string with hours (if > 0) and minutes
+// FDur formats a duration to a human-readable string with hours and minutes
+// it takes a duration (time.Duration) as input and returns a string representation of it in the format "XhYm",
+// where X is the number of hours and Y is the number of minutes.
+// The function handles edge cases such as zero minutes or negative hours.
 func FDur(d time.Duration) string {
-	minutes := int(d.Minutes()) % minPerHour
-	if d.Hours() < 0 {
-		minutes = int(math.Abs(d.Minutes())) % minPerHour // no negative minutes
+	if d.Minutes() == 0 {
+		return "0m"
 	}
-	if minutes == 0 {
-		return fmt.Sprintf("%dh", int(d.Hours()))
+	hourStr := ""
+	if d.Hours() > 1 || d.Hours() < -1 {
+		hourStr = fmt.Sprintf("%dh", int(d.Hours()))
 	}
-	return fmt.Sprintf("%dh%dm", int(d.Hours()), minutes)
-	/*
-		switch {
-		case d.Hours() > 0:
-			return fmt.Sprintf("%dh%dm", int(d.Hours()), int(d.Minutes())%minPerHour)
-		case d.Hours() < 0:
-
-			return fmt.Sprintf("%dh%dm", int(d.Hours()), int(math.Abs(d.Minutes()))%minPerHour)
-		default:
-			return fmt.Sprintf("%dm", int(d.Minutes()))
-			}
-	*/
+	minStr := ""
+	if int(d.Minutes())%minPerHour != 0 {
+		if d.Hours() <= -1 {
+			minStr = fmt.Sprintf("%dm", int(math.Abs(d.Minutes()))%minPerHour) // no negative minutes in negative hours
+		} else {
+			minStr = fmt.Sprintf("%dm", int(d.Minutes())%minPerHour)
+		}
+	}
+	return hourStr + minStr
 }

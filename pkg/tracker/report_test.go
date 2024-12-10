@@ -27,8 +27,12 @@ func Test_Report(t *testing.T) {
 }
 
 func Test_FormatDuration(t *testing.T) {
+	assert.Equal(t, "-59m", FDur(-59*time.Minute))
+	assert.Equal(t, "2h", FDur(2*time.Hour))
+	assert.Equal(t, "-2h", FDur(-2*time.Hour))
 	assert.Equal(t, "2h5m", FDur(2*time.Hour+5*time.Minute))
-	assert.Equal(t, "0h5m", FDur(5*time.Minute))
-	assert.Equal(t, "0h", FDur(0*time.Minute))
+	assert.Equal(t, "5m", FDur(5*time.Minute))
+	assert.Equal(t, "2h", FDur(2*time.Hour))
+	assert.Equal(t, "0m", FDur(0*time.Minute))
 	assert.Equal(t, "-3h7m", FDur(-3*time.Hour+7*time.Minute*-1))
 }
