@@ -57,9 +57,9 @@ func Test_PunchReport(t *testing.T) {
 	var output bytes.Buffer
 	tr.opts.Out = &output
 
-	day, err := time.Parse("2006-01-02 15:04:05", "2024-01-23 13:14:15") // is a tuesday
-	assert.NoError(t, err)
-	day = TruncateDay(day)
+	// day, err := time.Parse("2006-01-02 15:04:05", "2024-01-23 13:14:15") // is a tuesday
+	// assert.NoError(t, err)
+	day := TruncateDay(time.Now())
 	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
 			mock.NewRows([]string{"day", "busy_secs"}).
@@ -67,7 +67,7 @@ func Test_PunchReport(t *testing.T) {
 				AddRow(day, 7200),
 		)
 	mock.ExpectClose()
-	err = tr.PunchReport(context.Background())
+	err := tr.PunchReport(context.Background())
 	assert.NoError(t, err)
-	assert.Contains(t, output.String(), "Tuesday")
+	assert.Contains(t, output.String(), day.Weekday().String())
 }

@@ -26,7 +26,7 @@ var punchCmd = &cobra.Command{
 		}
 		punchOpts.Out = rootCmd.OutOrStdout()
 		t := tracker.New(&punchOpts)
-		return t.PunchReport(cmd.Context())
+		return t.PunchReport(cmd.Context()) // always show current report, even in create mode
 	},
 }
 

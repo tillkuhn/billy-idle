@@ -94,10 +94,10 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
 		_, _ = fmt.Fprintf(w, "BusyTime: %s  +Break: %s  Busy+Idle: %s  Skipped(<%v): %d  >Max(%s): %v\n",
 			// first.BusyStart.Format("2006-01-02 Mon"),
-			FDur(spentBusy),                               // busy time (total - idle)
+			FDur(spentBusy), // busy time (total - idle)
 			FDur((spentBusy + kitKat).Round(time.Minute)), // busy time including break
-			FDur(spentTotal),                              // total time both busy + idle
-			FDur(t.opts.MinBusy), skippedTooShort,         // number of skipped records
+			FDur(spentTotal),                      // total time both busy + idle
+			FDur(t.opts.MinBusy), skippedTooShort, // number of skipped records
 			FDur(t.opts.MaxBusy) /* max busy time e.g. 10h */, spentBusy > t.opts.MaxBusy, /* over max? */
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
@@ -105,10 +105,10 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		color.Set(color.FgGreen)
 		_, _ = fmt.Fprintf(w, "Suggest.: %v → %v (%vm break)  OverReg(>%v): %v  OverMax(>%v): %v\n",
 			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"),                                              // Simplified start
-			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
-			kitKat.Round(time.Minute).Minutes(),                                   //break time depending on total busy time
-			FDur(t.opts.RegBusy)                                                   /* reg busy time e.g. (7:48) */, FDur(spentBusy-t.opts.RegBusy), // overtime
+			sugStart.Format("15:04"), // Simplified start
+			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"),                // Simplified end
+			kitKat.Round(time.Minute).Minutes(),                                                  // break time depending on total busy time
+			FDur(t.opts.RegBusy) /* reg busy time e.g. (7:48) */, FDur(spentBusy-t.opts.RegBusy), // overtime
 			FDur(t.opts.MaxBusy), FDur(spentBusy-t.opts.MaxBusy), // over max
 		)
 		color.Unset()
