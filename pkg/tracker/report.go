@@ -16,7 +16,7 @@ const sepLineLen = 100
 
 // trackRecords retried existing track records for a specific time period
 func (t *Tracker) trackRecords(ctx context.Context) (map[string][]TrackRecord, error) {
-	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
+	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || 'secs' AS total from track
 	query := `SELECT * FROM track WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
@@ -91,25 +91,25 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		kitKat := mandatoryBreak(spentBusy)
 		spentBusy = spentBusy.Round(time.Minute)
 		spentTotal = spentTotal.Round(time.Minute)
-		color.Set(color.FgGreen)
 		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
-		_, _ = fmt.Fprintf(w, "Busy: %s  WithBreak(%vm): %s  Skipped(<%v): %d  >Max(%s): %v  Range: %s\n",
+		_, _ = fmt.Fprintf(w, "BusyTime: %s  +Break: %s  Busy+Idle: %s  Skipped(<%v): %d  >Max(%s): %v\n",
 			// first.BusyStart.Format("2006-01-02 Mon"),
-			FDur(spentBusy),
-			kitKat.Round(time.Minute).Minutes(),
-			FDur((spentBusy + kitKat).Round(time.Minute)),
-			FDur(t.opts.MinBusy), skippedTooShort,
-			FDur(t.opts.MaxBusy), spentBusy > t.opts.MaxBusy,
-			FDur(spentTotal),
+			FDur(spentBusy),                               // busy time (total - idle)
+			FDur((spentBusy + kitKat).Round(time.Minute)), // busy time including break
+			FDur(spentTotal),                              // total time both busy + idle
+			FDur(t.opts.MinBusy), skippedTooShort,         // number of skipped records
+			FDur(t.opts.MaxBusy) /* max busy time e.g. 10h */, spentBusy > t.opts.MaxBusy, /* over max? */
 		)
 		sugStart, _ := time.Parse("15:04", "09:00")
 
-		_, _ = fmt.Fprintf(w, "Simplified Entry: %v → %v (inc. break)  Overtime(>%v): %v utilMax(%v): %v\n",
+		color.Set(color.FgGreen)
+		_, _ = fmt.Fprintf(w, "Suggest.: %v → %v (%vm break)  OverReg(>%v): %v  OverMax(>%v): %v\n",
 			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"), // Simplified start
+			sugStart.Format("15:04"),                                              // Simplified start
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
-			FDur(t.opts.RegBusy) /* reg busy time e.g. 7:48 */, FDur(spentBusy-t.opts.RegBusy), // overtime
-			FDur(t.opts.MaxBusy), FDur(t.opts.MaxBusy-spentBusy),
+			kitKat.Round(time.Minute).Minutes(),                                   //break time depending on total busy time
+			FDur(t.opts.RegBusy)                                                   /* reg busy time e.g. (7:48) */, FDur(spentBusy-t.opts.RegBusy), // overtime
+			FDur(t.opts.MaxBusy), FDur(spentBusy-t.opts.MaxBusy), // over max
 		)
 		color.Unset()
 		_, _ = fmt.Fprintln(w, strings.Repeat("=", sepLineLen))
