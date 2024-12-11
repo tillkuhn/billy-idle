@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSum(t *testing.T) {
+	today := time.Now()
 	tests := map[string]struct {
 		args  []string
 		out   string
@@ -35,13 +37,13 @@ func TestSum(t *testing.T) {
 			"cannot parse",
 		},
 		"ok-2-args": {
-			[]string{"4h5m", "2024-11-11"},
-			"Monday",
+			[]string{"4h5m", today.Format("2006-01-02")},
+			today.Weekday().String(),
 			"",
 		},
 		"ok-1-arg": {
 			[]string{"4h5m"},
-			"Monday",
+			today.Weekday().String(),
 			"",
 		},
 	}

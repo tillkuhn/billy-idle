@@ -90,10 +90,12 @@ func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Durat
 	return nil
 }
 
-// PunchRecords retried existing punch records for a specific time period
+// PunchRecords retried existing punch records for the current month
 func (t *Tracker) PunchRecords(ctx context.Context) ([]PunchRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
-	query := `SELECT day,busy_secs FROM ` + tablePunch + ` ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
+	// current month: select * from punch where substr(day, 6, 2) = strftime('%m', 'now')
+	query := `SELECT day,busy_secs FROM ` + tablePunch + ` WHERE substr(day, 6, 2) = strftime('%m', 'now') ` +
+		`ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
 	var records []PunchRecord
