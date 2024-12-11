@@ -59,6 +59,7 @@ func (t TrackRecord) String() string {
 		/*t.BusyStart.Format("Mon"),*/ t.BusyStart.Format("15:04:05"), to, verb, t.Task, t.ID)
 }
 
+// Duration returns the duration of a punch record, calculated as the difference between the end and start times.
 func (t TrackRecord) Duration() time.Duration {
 	if t.BusyEnd.Valid {
 		return t.BusyEnd.Time.Sub(t.BusyStart)

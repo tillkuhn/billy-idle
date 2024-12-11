@@ -65,6 +65,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	return nil
 }
 
+// UpsertPunchRecord Updates or inserts a punch record into the database based on whether it already exists.
 func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Duration, day time.Time) error {
 	uQuery := `UPDATE ` + tablePunch + `
 			   SET busy_secs=$2,client=$3
