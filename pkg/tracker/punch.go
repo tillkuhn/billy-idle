@@ -33,9 +33,17 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 
+	curWeek := 0
 	for _, r := range recs {
 		spentDay := time.Duration(r.BusySecs) * time.Second
-		_, week := r.Day.ISOWeek()
+
+		// handle calendar week, if it changes during the report, print an empty line
+		_, week := r.Day.ISOWeek() // week ranges from 1 to 53
+		if curWeek > 0 && curWeek != week {
+			table.Append([]string{"", "", "", ""})
+		}
+		curWeek = week
+
 		table.Append([]string{
 			r.Day.Format(" 2006-01-02"),
 			strconv.Itoa(week),
