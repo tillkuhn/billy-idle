@@ -42,7 +42,13 @@ func punchCreate(ctx context.Context, args []string) error {
 	var err error
 	var day time.Time
 	day = time.Now()
+	// if 2nd arg exists, consider it to be the target day, otherwise assume "today"
 	if len(args) == 2 {
+		// todo check if numeric arg (relative number of days) first
+		// var digitCheck = regexp.MustCompile(`^[-+]?[0-9]+$`)
+		//num := "+1212"
+		//fmt.Println(digitCheck.MatchString(num))
+		//i, _ := strconv.ParseInt(num, 0, 64)
 		day, err = time.Parse("2006-01-02", args[1])
 		if err != nil {
 			return err

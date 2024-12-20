@@ -78,12 +78,13 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 // UpsertPunchRecord Updates or inserts a punch record into the database based on whether it already exists.
 func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Duration, day time.Time) error {
 	uQuery := `UPDATE ` + tablePunch + `
-			   SET busy_secs=$2,client=$3
+			   SET busy_secs=$2,client=$3,planned_secs=$4
                WHERE day=$1`
-	day = TruncateDay(day) // https://stackoverflow.com/a/38516536/4292075
-	uRes, err := t.db.ExecContext(ctx, uQuery, day, busyDuration.Seconds(), t.opts.ClientID)
+	day = TruncateDay(day)                  // https://stackoverflow.com/a/38516536/4292075
+	plannedSecs := t.opts.RegBusy.Seconds() // todo support pass-in
+	uRes, err := t.db.ExecContext(ctx, uQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedSecs)
 	if err != nil {
-		return errors.Wrap(err, "unable to update busy table")
+		return errors.Wrap(err, "unable to update "+tablePunch+" table")
 	}
 	if updated, _ := uRes.RowsAffected(); updated > 0 {
 		log.Printf("🥫 Updated existing busy record for day %v duraction %v", day, busyDuration)
@@ -91,12 +92,12 @@ func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Durat
 	}
 
 	// No update - let's insert a new row
-	iQuery := `INSERT INTO ` + tablePunch + ` (day,busy_secs,client) VALUES ($1,$2,$3) RETURNING id`
+	iQuery := `INSERT INTO ` + tablePunch + ` (day,busy_secs,client,planned_secs) VALUES ($1,$2,$3,$4) RETURNING id`
 	var id int
-	if err := t.db.QueryRowContext(ctx, iQuery, day, busyDuration.Seconds(), t.opts.ClientID).Scan(&id); err != nil {
+	if err := t.db.QueryRowContext(ctx, iQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedSecs).Scan(&id); err != nil {
 		return errors.Wrap(err, "unable to insert new record in busy table")
 	}
-	log.Printf("🥫 New busy record for day %v duraction %v created with id=%d", day, busyDuration, id)
+	log.Printf("🥫 New busy record for day %v duration %v created with id=%d", day, busyDuration, id)
 	return nil
 }
 

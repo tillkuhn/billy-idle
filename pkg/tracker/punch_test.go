@@ -15,7 +15,7 @@ func Test_UpsertPunchUpdate(t *testing.T) {
 	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
-	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test").
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
 		WillReturnResult(sqlmock.NewResult(0, 88))
 	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day)
 	assert.NoError(t, err)
@@ -26,10 +26,10 @@ func Test_UpsertPunchInsert(t *testing.T) {
 	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
-	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test").
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery("INSERT INTO "+tablePunch).
-		WithArgs(day, float64(3600), "test").
+		WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
 		WillReturnRows(mock.NewRows([]string{"id"}).
 			AddRow("44"))
 	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day)
@@ -42,9 +42,9 @@ func Test_SelectPunch(t *testing.T) {
 	today := TruncateDay(time.Now())
 	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
-			mock.NewRows([]string{"day", "busy_secs"}).
-				AddRow(today, 3600).
-				AddRow(today, 7200),
+			mock.NewRows([]string{"day", "busy_secs", "planned_secs"}).
+				AddRow(today, 3600, 28080).
+				AddRow(today, 7200, 28080),
 		)
 	mock.ExpectClose()
 	recs, err := tr.PunchRecords(context.Background())
@@ -62,9 +62,9 @@ func Test_PunchReport(t *testing.T) {
 	day := TruncateDay(time.Now())
 	mock.ExpectQuery("SELECT (.*)").
 		WillReturnRows(
-			mock.NewRows([]string{"day", "busy_secs"}).
-				AddRow(day, 3600).
-				AddRow(day, 7200),
+			mock.NewRows([]string{"day", "busy_secs", "planned_secs"}).
+				AddRow(day, 3600, 28080).
+				AddRow(day, 7200, 28080),
 		)
 	mock.ExpectClose()
 	err := tr.PunchReport(context.Background())
