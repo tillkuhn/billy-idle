@@ -39,8 +39,9 @@ type TrackRecord struct {
 }
 
 type PunchRecord struct {
-	Day      time.Time `db:"day"`
-	BusySecs float64   `db:"busy_secs"`
+	Day         time.Time `db:"day"`
+	BusySecs    float64   `db:"busy_secs"`
+	PlannedSecs float64   `db:"planned_secs"`
 }
 
 // String returns a string representation of the TrackRecord

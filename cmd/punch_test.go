@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestSum and other tests run against existing test db, e.g. ~/.billy-idle/test/db.sqlite3 !!!
 func TestSum(t *testing.T) {
 	today := time.Now()
 	tests := map[string]struct {
