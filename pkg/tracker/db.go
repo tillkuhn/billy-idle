@@ -16,7 +16,7 @@ import (
 
 // Package embed provides access to Files embedded in the running Go program.
 //
-//go:embed init-db.sql
+//go:embed db-init.sql
 var initSQL string
 
 // initDB initializes SQLite DB in local filesystem

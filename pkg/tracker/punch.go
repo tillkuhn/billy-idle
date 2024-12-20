@@ -27,11 +27,12 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	var spentBusy time.Duration
 	table := tablewriter.NewWriter(t.opts.Out)
 	bold := tablewriter.Colors{tablewriter.Bold}
-	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy Time"})
-	table.SetHeaderColor(bold, bold, bold, bold)
+	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy", "Planned"})
+	table.SetHeaderColor(bold, bold, bold, bold, bold)
 	table.SetBorder(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoMergeCells(true)
 
 	curWeek := 0
 	for _, r := range recs {
@@ -40,7 +41,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 		// handle calendar week, if it changes during the report, print an empty line
 		_, week := r.Day.ISOWeek() // week ranges from 1 to 53
 		if curWeek > 0 && curWeek != week {
-			table.Append([]string{"", "", "", ""})
+			table.Append([]string{"", "", "", "", ""})
 		}
 		curWeek = week
 
@@ -49,6 +50,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 			strconv.Itoa(week),
 			r.Day.Format("Monday"),
 			FDur(spentDay),
+			FDur(time.Duration(r.PlannedSecs) * time.Second),
 		})
 		spentBusy += spentDay
 	}
@@ -60,10 +62,10 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 
 	// Table Footer with totals
 	table.SetFooter([]string{"", "", "Total\nOvertime",
-		fmt.Sprintf("%s (%ddays)\n%v (>%v)", FDur(spentBusy), pDays, FDur(overtime), FDur(expected)),
+		fmt.Sprintf("%s (%dd)\n%v (>%v)", FDur(spentBusy), pDays, FDur(overtime), FDur(expected)), "",
 	}) // Add Footer
 	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{}, bold,
-		tablewriter.Colors{tablewriter.FgHiGreenColor})
+		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{})
 	table.Render()
 
 	color.Set(color.FgGreen)
@@ -102,7 +104,7 @@ func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Durat
 func (t *Tracker) PunchRecords(ctx context.Context) ([]PunchRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	// current month: select * from punch where substr(day, 6, 2) = strftime('%m', 'now')
-	query := `SELECT day,busy_secs FROM ` + tablePunch + ` WHERE substr(day, 6, 2) = strftime('%m', 'now') ` +
+	query := `SELECT day,busy_secs,planned_secs FROM ` + tablePunch + ` WHERE substr(day, 6, 2) = strftime('%m', 'now') ` +
 		`ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case
