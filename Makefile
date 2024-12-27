@@ -118,6 +118,7 @@ run-help: ## Run app in help mode
 	go run main.go
 	go run main.go track --help
 	go run main.go report --help
+	go run main.go punch --help
 
 .PHONY: install
 install: clean build ## Install as launchd managed service

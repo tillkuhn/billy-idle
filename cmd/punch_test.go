@@ -23,9 +23,9 @@ func TestSum(t *testing.T) {
 		//	"requires at least 1 arg(s)",
 		// },
 		"too-many-args": {
-			[]string{"1", "2", "3"},
+			[]string{"1", "2", "3", "4"},
 			"",
-			"accepts at most 2 arg(s)",
+			"accepts at most 3 arg(s)",
 		},
 		"invalid-time": {
 			[]string{"morning"},
@@ -37,8 +37,18 @@ func TestSum(t *testing.T) {
 			"",
 			"cannot parse",
 		},
+		"invalid-planned-dur": {
+			[]string{"4h5m", today.Format("2006-01-02"), "4x7y"},
+			"",
+			"time: unknown unit",
+		},
 		"ok-2-args": {
 			[]string{"4h5m", today.Format("2006-01-02")},
+			today.Weekday().String(),
+			"",
+		},
+		"ok-3-args": {
+			[]string{"4h5m", today.Format("2006-01-02"), "3h54m"},
 			today.Weekday().String(),
 			"",
 		},

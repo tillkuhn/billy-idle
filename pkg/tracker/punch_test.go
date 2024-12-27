@@ -21,6 +21,18 @@ func Test_UpsertPunchUpdate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func Test_UpsertPunchUpdateWithPlanned(t *testing.T) {
+	tracker, mock := DBMock(t)
+	day := TruncateDay(time.Now())
+	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
+	// mock.ExpectPrepare(sql1)
+	planned := time.Second * 7200
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", planned.Seconds()).
+		WillReturnResult(sqlmock.NewResult(0, 88))
+	err := tracker.UpsertPunchRecordWithPlannedDuration(context.Background(), time.Second*3600, day, planned)
+	assert.NoError(t, err)
+}
+
 func Test_UpsertPunchInsert(t *testing.T) {
 	tracker, mock := DBMock(t)
 	day := TruncateDay(time.Now())
