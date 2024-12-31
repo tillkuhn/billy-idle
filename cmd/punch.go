@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -10,6 +11,8 @@ import (
 )
 
 var punchOpts tracker.Options
+
+var shortDate = regexp.MustCompile(`^\d+-\d+$`)
 
 // punchCmd represents the busy command
 var punchCmd = &cobra.Command{
@@ -54,7 +57,12 @@ func punchCreate(ctx context.Context, args []string) error {
 		// var digitCheck = regexp.MustCompile(`^[-+]?[0-9]+$`)
 		// num := "+1212"
 		// fmt.Println(digitCheck.MatchString(num))
-		//i, _ := strconv.ParseInt(num, 0, 64)
+		// i, _ := strconv.ParseInt(num, 0, 64)
+
+		// if year is omitted, use current year as prefix
+		if shortDate.MatchString(args[1]) {
+			args[1] = fmt.Sprintf("%s-%s", time.Now().Format("2006"), args[1])
+		}
 		day, err = time.Parse("2006-01-02", args[1])
 		if err != nil {
 			return err
