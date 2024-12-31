@@ -24,11 +24,11 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	var spentBusy time.Duration
+	var spentBusyTotal, plannedBusyTotal time.Duration
 	table := tablewriter.NewWriter(t.opts.Out)
 	bold := tablewriter.Colors{tablewriter.Bold}
-	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy", "Planned"})
-	table.SetHeaderColor(bold, bold, bold, bold, bold)
+	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy", "⏲️ Planned", "Overtime"})
+	table.SetHeaderColor(bold, bold, bold, bold, bold, bold)
 	table.SetBorder(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -37,11 +37,11 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	curWeek := 0
 	for _, r := range recs {
 		spentDay := time.Duration(r.BusySecs) * time.Second
-
+		plannedDay := time.Duration(r.PlannedSecs) * time.Second
 		// handle calendar week, if it changes during the report, print an empty line
 		_, week := r.Day.ISOWeek() // week ranges from 1 to 53
 		if curWeek > 0 && curWeek != week {
-			table.Append([]string{"", "", "", "", ""})
+			table.Append([]string{"", "", "", "", "", ""})
 		}
 		curWeek = week
 
@@ -50,26 +50,30 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 			strconv.Itoa(week),
 			r.Day.Format("Monday"),
 			FDur(spentDay),
-			FDur(time.Duration(r.PlannedSecs) * time.Second),
+			FDur(plannedDay),
+			FDur(spentDay - plannedDay),
 		})
-		spentBusy += spentDay
+		spentBusyTotal += spentDay
+		plannedBusyTotal += plannedDay
 	}
 
-	spentBusy = spentBusy.Round(time.Minute)
+	spentBusyTotal = spentBusyTotal.Round(time.Minute)
 	pDays := len(recs)
-	expected := time.Duration(pDays) * t.opts.RegBusy
-	overtime := spentBusy - expected
+	// expected := // time.Duration(pDays) * t.opts.RegBusy
+	overtime := spentBusyTotal - plannedBusyTotal
 
 	// Table Footer with totals
-	table.SetFooter([]string{"", "", "Total\nOvertime",
-		fmt.Sprintf("%s (%dd)\n%v (>%v)", FDur(spentBusy), pDays, FDur(overtime), FDur(expected)), "",
+	table.SetFooter([]string{"", "", "Total\n",
+		fmt.Sprintf("%s\n%d days", FDur(spentBusyTotal), pDays),
+		"",
+		fmt.Sprintf("%v\n>%v", FDur(overtime), FDur(plannedBusyTotal)),
 	}) // Add Footer
 	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{}, bold,
-		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{})
+		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, tablewriter.Colors{})
 	table.Render()
 
 	color.Set(color.FgGreen)
-	// fmt.Printf("AVG/DAY: %v  REGULAR (%dd*%v): %v\n", tracker.FDur(spentBusy/time.Duration(pDays)),  pDays, tracker.FDur(punchOpts.RegBusy) )
+	// fmt.Printf("AVG/DAY: %v  REGULAR (%dd*%v): %v\n", tracker.FDur(spentBusyTotal/time.Duration(pDays)),  pDays, tracker.FDur(punchOpts.RegBusy) )
 	color.Unset()
 
 	return nil
