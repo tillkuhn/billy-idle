@@ -47,6 +47,11 @@ func TestSum(t *testing.T) {
 			today.Weekday().String(),
 			"",
 		},
+		"ok-2-args-short-date-form": {
+			[]string{"4h5m", today.Format("01-02")},
+			today.Weekday().String(),
+			"",
+		},
 		"ok-3-args": {
 			[]string{"4h5m", today.Format("2006-01-02"), "3h54m"},
 			today.Weekday().String(),
