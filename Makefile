@@ -6,7 +6,7 @@ OSNAME = $(shell uname -o)
 PROJECT_PKG = $(shell grep -e ^module go.mod|cut -d' '  -f2|xargs)
 # git info for ldflags inspired by https://github.com/oras-project/oras/blob/main/Makefile
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
-GIT_TAG     = $(shell git describe --tags --abbrev=0 2>/dev/null)
+GIT_TAG    = $(shell git describe --tags --abbrev=0 2>/dev/null)
 #GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 LDFLAGS = -w
 LDFLAGS += -X main.cmmit=${GIT_COMMIT}

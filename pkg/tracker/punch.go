@@ -27,7 +27,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	var spentBusyTotal, plannedBusyTotal time.Duration
 	table := tablewriter.NewWriter(t.opts.Out)
 	bold := tablewriter.Colors{tablewriter.Bold}
-	table.SetHeader([]string{"🕰 Date", "CW", "Weekday", "🐝 Busy", "⏲️ Planned", "Overtime"})
+	table.SetHeader([]string{"CW", "📅 Date", "Weekday", "🐝 Busy", "⏲️  Plan", "🕰 Overtime"})
 	table.SetHeaderColor(bold, bold, bold, bold, bold, bold)
 	table.SetBorder(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
@@ -46,8 +46,8 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 		curWeek = week
 
 		table.Append([]string{
-			r.Day.Format(" 2006-01-02"),
 			strconv.Itoa(week),
+			r.Day.Format(" 2006-01-02"),
 			r.Day.Format("Monday"),
 			FDur(spentDay),
 			FDur(plannedDay),
@@ -100,7 +100,7 @@ func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busy
 	}
 
 	// No update - let's insert a new row
-	iQuery := `INSERT INTO ` + tablePunch + ` (day,busy_secs,client,planned_secs) VALUES ($1,$2,$3,$4) RETURNING id`
+	iQuery := `INSERT ` + `INTO ` + tablePunch + ` (day,busy_secs,client,planned_secs) VALUES ($1,$2,$3,$4) RETURNING id`
 	var id int
 	if err := t.db.QueryRowContext(ctx, iQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedDuration.Seconds()).Scan(&id); err != nil {
 		return errors.Wrap(err, "unable to insert new record in busy table")
@@ -113,7 +113,7 @@ func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busy
 func (t *Tracker) PunchRecords(ctx context.Context) ([]PunchRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	// current month: select * from punch where substr(day, 6, 2) = strftime('%m', 'now')
-	query := `SELECT day,busy_secs,planned_secs FROM ` + tablePunch + ` WHERE substr(day, 6, 2) = strftime('%m', 'now') ` +
+	query := `SELECT day,busy_secs,planned_secs ` + `FROM ` + tablePunch + ` WHERE substr(day, 6, 2) = strftime('%m', 'now') ` +
 		`ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case

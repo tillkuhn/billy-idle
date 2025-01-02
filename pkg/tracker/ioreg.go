@@ -9,12 +9,15 @@ import (
 	"time"
 )
 
+// limitDepth is passed to "-d" arg (limit tree to the given depth) to reduce amount of output
+const limitDepth = 4 // 4 should be sufficient to catch relevant HIDIdleTime figures
+
 var idleMatcher = regexp.MustCompile("\"HIDIdleTime\"\\s*=\\s*(\\d+)")
 
 // IdleTime gets the current idle time (HIDIdleTime) in milliseconds from the external ioreg command
 // todo optimize by limit depth, e.g. -d 4 should be sufficient ...	-d limit tree to the given depth
 func IdleTime(ctx context.Context, cmd string) (int64, error) {
-	cmdExec := exec.CommandContext(ctx, cmd, "-d", "4", "-c", "IOHIDSystem")
+	cmdExec := exec.CommandContext(ctx, cmd, "-d", strconv.Itoa(limitDepth), "-c", "IOHIDSystem")
 	stdout, err := cmdExec.Output()
 	if err != nil {
 		return 0, err

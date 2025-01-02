@@ -49,6 +49,10 @@ issues:
     - text: "G404:" # Ignore weak random number generator lint. We do not need strong randomness here.
       linters:
         - gosec
+    - text: "G204:" # Ignore Subprocess launched with a potential tainted input or cmd arguments (uses a constant)
+      path: pkg/tracker/ioreg.go
+      linters:
+        - gosec
     - path: _test\.go
       linters:
         - gochecknoglobals
@@ -57,16 +61,16 @@ issues:
         - noctx
     # this is the exception for commit, data and version variable which with pass in using ldflags
     - path: internal/version/version.go
-      linters: [gochecknoglobals]
+      linters: [ gochecknoglobals ]
     - path: cmd/punch.go
-      linters: [gochecknoglobals,mnd]
+      linters: [ gochecknoglobals,mnd ]
     - path: cmd/report.go
-      linters: [gochecknoglobals,mnd]
+      linters: [ gochecknoglobals,mnd ]
     - path: cmd/root.go
-      linters: [gochecknoglobals,mnd]
+      linters: [ gochecknoglobals,mnd ]
     - path: cmd/track.go
-      linters: [gochecknoglobals,mnd]
+      linters: [ gochecknoglobals,mnd ]
     - path: pkg/tracker/report.go
-      linters: [mnd] # magic number detection is annoying here
+      linters: [ mnd ] # magic number detection is annoying here
     - path: pkg/tracker/tracker.go
-      linters: [mnd]
+      linters: [ mnd ]
