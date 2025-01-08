@@ -4,33 +4,45 @@ image:https://github.com/tillkuhn/billy-idle/actions/workflows/go.yml/badge.svg[
 
 Simple busy / idle time tracker inspired by the ancient article https://www.dssw.co.uk/blog/2015-01-21-inactivity-and-idle-time/[Inactivity and Idle Time on OS X].
 
-
 == Background
 
 According to the article, OS X has a timer called *HIDIdleTime* that tracks the last time you interacted with the computer, e.g. moved the mouse, typed a key, or interacted with the computer.
 
-*billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold. If exceeded, it will create a record for the busy time period in database. This data can later be used as input for time tracking tools or statistics.
+*billy-idle* simply queries this value periodically using the `ioreg` utility that ships with macOS, and matches it against a pre-defined threshold.
+If exceeded, it will create a record for the busy time period in database.
+This data can later be used as input for time tracking tools or statistics.
 
 == Example Time Tracking Report
 
 ----
-Tuesday November 12, 2024 (2024-11-12) Daily Report
+🕰  Wednesday January 08, 2025 (2025-01-08) Daily Report
 ----------------------------------------------------------------------------------------------------
-08:49:23 → 11:14:53: Spent 2h25m30s Building App Monkeydid 2.9.5 in CSP #306
-11:27:51 → 11:38:52: Spent 11m1s Eating a Creamy apple dessert topped with Blackcurrant #307
-11:40:40 → 12:33:24: Spent 52m44s Driving a Passenger car mini Pilot 4wd to Mesa #308
-12:52:23 → 15:05:41: Spent 2h13m18s Driving a Passenger car medium Rio to Sacramento #309
-16:05:28 → 16:27:43: Spent 22m15s Building App Darkorangerain 1.6.1 in F #311
-16:27:43 → 16:58:49: Spent 31m6s Eating a Swirled cranberry cheesecake topped with Rock melon #312
-17:20:02 → 18:51:29: Spent 1h31m27s Eating a Mexican rice pudding topped with Grape #313
-19:07:32 → 19:33:40: Spent 26m8s Drinking a Light Hybrid Beer Stone IPA with 2.8% #317
-19:52:25 → 20:35:48: Spent 43m23s Building App Jellyfishare 2.8.8 in WebDNA #318
-20:52:23 → 21:02:20: Spent 9m57s Building App Troopcould 3.15.7 in Fancy #319
-22:03:36 → now     : 🕰️  Still busy with Eating a A 1 cherry cobbler tart  a1 topped with Apricot #321
+☕ 08:53:01 → 12:12:24: Spent 3h19m Eating a Mimis maine blueberry cobbler topped with Redcurrant #854
+🌞 13:06:13 → 15:04:00: Spent 1h57m Driving a Passenger car heavy Gto to San Jose #856
+🌞 15:40:11 → 19:03:32: Spent 3h23m Building App Boardwash 5.6.3 in A++ #857
+🌙 21:31:41 → 22:17:46: Spent 46m Building App Shoppingsnore 3.4.5 in Jako #858
+🌙 22:17:46 → now     : Still busy with Drinking a English Pale Ale Stone Imperial Russian Stout with 6.5% #859
 ----------------------------------------------------------------------------------------------------
-Total: 13h48m0s  busy: 10h0m0s  busy+break: 10h45m0s  skipped(<5m0s): 6  overMax(10h0m0s): false
-Simple Entry for Tuesday: 09:00 → 19:45 (inc. 45m break)  overtime (>7h48m0s): 2h12m0s
+BusyTime: 9h29m  +Break: 10h14m  Busy+Idle: 22h5m  Skipped(<5m): 5  >Max(10h): false
+Suggest.: 09:00 → 19:14 (45m break)  OverReg(>7h48m): 1h41m  OverMax(>10h): -31m
 ====================================================================================================
+----
+
+== Example Punch Clock Report
+
+----
+  CW | 📅 DATE     | WEEKDAY   | 🐝 BUSY | ⏲️  PLAN | 🕰 OVERTIME
+-----+-------------+-----------+---------+----------+-------------
+  1  |  2025-01-01 | Wednesday | 0m      | 0m       | 0m
+     |  2025-01-02 | Thursday  | 7h50m   | 7h48m    | 2m
+     |  2025-01-03 | Friday    | 8h10m   |          | 22m
+     |             |           |         |          |
+  2  |  2025-01-06 | Monday    | 9h      | 7h48m    | 1h12m
+     |  2025-01-07 | Tuesday   | 8h50m   |          | 1h2m
+     |  2025-01-08 | Wednesday | 8h40m   |          | 52m
+-----+-------------+-----------+---------+----------+-------------
+                       TOTAL   | 42H30M  |              3H30M
+                               | 6 DAYS  |               >39H
 ----
 
 == Run from source
@@ -91,7 +103,6 @@ Global Flags:
   -d, --debug   Debug checkpoints
 ----
 
-
 .CLI Usage for report subcommand
 [source,shell]
 ----
@@ -130,7 +141,8 @@ Global Flags:
 
 == Database Support
 
-*Billy Idle* currently only support a local https://gitlab.com/cznic/sqlite[sqlite] database, more precisely `modernc.org/sqlite` which is a cgo-free port of SQLite. But it shouldn't be a big deal to add support for a remote https://www.postgresql.org[PostgreSQL] Database.
+*Billy Idle* currently only support a local https://gitlab.com/cznic/sqlite[sqlite] database, more precisely `modernc.org/sqlite` which is a cgo-free port of SQLite.
+But it shouldn't be a big deal to add support for a remote https://www.postgresql.org[PostgreSQL] Database.
 
 image:docs/sqlite.png[]
 

@@ -55,9 +55,10 @@ func (t TrackRecord) String() string {
 		to = "now"
 		// suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
 	}
-	// 2024-10-09 Wed 09:01:30 #144 Spent 3h31m20s Eating a Frosted rhubarb cookies topped with Honeydew until 12:32PM
-	return fmt.Sprintf("%s → %-8s: %s %s #%d",
-		/*t.BusyStart.Format("Mon"),*/ t.BusyStart.Format("15:04:05"), to, verb, t.Task, t.ID)
+	// 2025-10-09 Wed 09:01:30 #144 Spent 3h31m20s Eating a Frosted rhubarb cookies topped with Honeydew until 12:32PM
+	return fmt.Sprintf("%s %s → %-8s: %s %s #%d",
+		DayTimeIcon(t.BusyStart),
+		t.BusyStart.Format("15:04:05"), to, verb, t.Task, t.ID)
 }
 
 // Duration returns the duration of a punch record, calculated as the difference between the end and start times.

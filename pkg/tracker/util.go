@@ -33,3 +33,19 @@ func FDur(d time.Duration) string {
 	}
 	return hourStr + minStr
 }
+
+// DayTimeIcon returns the appropriate emoji for the time of day associated with
+// the time. See also https://www.vokabel.org/englisch/kurs/tag-und-woche/
+func DayTimeIcon(t time.Time) string {
+	h := t.Hour()
+	switch {
+	case h >= 6 && h < 12:
+		return "☕" // morning
+	case h >= 12 && h < 18:
+		return "🌞" // day
+	case h >= 18 && h < 24:
+		return "🌙" // evening
+	default:
+		return "💤" // night
+	}
+}
