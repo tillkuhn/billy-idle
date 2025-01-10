@@ -148,7 +148,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			color.Set(color.FgHiMagenta)
 			overInfo = fmt.Sprintf("you're expected to be busy for another %s", FDur(overDur*-1))
 		}
-		_, _ = fmt.Fprintf(w, "Suggestestion: %v → %v (inc. %vm break), %s!\n\n",
+		_, _ = fmt.Fprintf(w, "Suggestion: %v → %v (inc. %vm break), %s!\n\n",
 			// first.BusyStart.Format("Monday"),
 			sugStart.Format("15:04"),                                              // Simplified start
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
