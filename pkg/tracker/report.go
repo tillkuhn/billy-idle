@@ -14,7 +14,7 @@ import (
 )
 
 const minPerHour = 60
-const sepLineLen = 100
+const sepLineLen = 60
 
 // trackRecords retried existing track records for a specific time period
 func (t *Tracker) trackRecords(ctx context.Context) (map[string][]TrackRecord, error) {
@@ -150,7 +150,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		}
 		_, _ = fmt.Fprintf(w, "Suggestestion: %v → %v (inc. %vm break), %s!\n\n",
 			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"), // Simplified start
+			sugStart.Format("15:04"),                                              // Simplified start
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
 			kitKat.Round(time.Minute).Minutes(),                                   // break duration depending on total busy time
 			overInfo,
