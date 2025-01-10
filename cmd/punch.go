@@ -10,7 +10,10 @@ import (
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
-var punchOpts tracker.Options
+var (
+	punchOpts tracker.Options
+	punchNote string
+)
 
 var shortDate = regexp.MustCompile(`^\d+-\d+$`)
 
@@ -43,6 +46,7 @@ func init() {
 	rootCmd.AddCommand(punchCmd)
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.Env, "env", "e", defaultEnv(), "Environment")
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
+	punchCmd.PersistentFlags().StringVar(&punchNote, "note", "", "Optional note that will be attached to the punch record")
 	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }
 
