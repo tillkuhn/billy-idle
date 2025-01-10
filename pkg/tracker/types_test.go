@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"database/sql"
 	"path/filepath"
 	"testing"
 	"time"
@@ -32,6 +33,18 @@ func Test_CurrentState(t *testing.T) {
 func Test_AppDir(t *testing.T) {
 	o := Options{Env: "test", AppRoot: "/tmp"}
 	assert.Equal(t, filepath.Join("/tmp", "test"), o.AppDir())
+}
+
+func Test_String(t *testing.T) {
+	tr := TrackRecord{
+		ID:        22,
+		BusyStart: time.Time{},
+		BusyEnd:   sql.NullTime{},
+		Message:   "hello",
+		Task:      "123",
+		Client:    "test",
+	}
+	assert.Contains(t, tr.String(), "22")
 }
 
 // Test add-break-on-top calc

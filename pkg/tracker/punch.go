@@ -25,6 +25,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 		return err
 	}
 	var spentBusyTotal, plannedBusyTotal time.Duration
+
 	table := tablewriter.NewWriter(t.opts.Out)
 	bold := tablewriter.Colors{tablewriter.Bold}
 	table.SetHeader([]string{"CW", "📅 Date", "Weekday", "🐝 Busy", "⏲️  Plan", "🕰 Overtime"})
