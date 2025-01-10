@@ -46,19 +46,9 @@ type PunchRecord struct {
 
 // String returns a string representation of the TrackRecord
 func (t TrackRecord) String() string {
-	var verb, to string
-	if t.BusyEnd.Valid {
-		verb = "Spent " + FDur(t.Duration())
-		to = t.BusyEnd.Time.Format("15:04:05")
-	} else {
-		verb = "Still busy with"
-		to = "now"
-		// suffix = fmt.Sprintf("since %v", time.Since(t.BusyStart).Round(time.Second))
-	}
 	// 2025-10-09 Wed 09:01:30 #144 Spent 3h31m20s Eating a Frosted rhubarb cookies topped with Honeydew until 12:32PM
-	return fmt.Sprintf("%s %s → %-8s: %s %s #%d",
-		DayTimeIcon(t.BusyStart),
-		t.BusyStart.Format("15:04:05"), to, verb, t.Task, t.ID)
+	return fmt.Sprintf("%s → %v: %s#%d",
+		t.BusyStart.Format("15:04:05"), t.BusyEnd, t.Task, t.ID)
 }
 
 // Duration returns the duration of a punch record, calculated as the difference between the end and start times.

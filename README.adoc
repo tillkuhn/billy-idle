@@ -15,17 +15,19 @@ This data can later be used as input for time tracking tools or statistics.
 == Example Time Tracking Report
 
 ----
-🕰  Wednesday January 08, 2025 (2025-01-08) Daily Report
+Friday January 10, 2025 (2025-01-10) Daily Report
 ----------------------------------------------------------------------------------------------------
-☕ 08:53:01 → 12:12:24: Spent 3h19m Eating a Mimis maine blueberry cobbler topped with Redcurrant #854
-🌞 13:06:13 → 15:04:00: Spent 1h57m Driving a Passenger car heavy Gto to San Jose #856
-🌞 15:40:11 → 19:03:32: Spent 3h23m Building App Boardwash 5.6.3 in A++ #857
-🌙 21:31:41 → 22:17:46: Spent 46m Building App Shoppingsnore 3.4.5 in Jako #858
-🌙 22:17:46 → now     : Still busy with Drinking a English Pale Ale Stone Imperial Russian Stout with 6.5% #859
-----------------------------------------------------------------------------------------------------
-BusyTime: 9h29m  +Break: 10h14m  Busy+Idle: 22h5m  Skipped(<5m): 5  >Max(10h): false
-Suggest.: 09:00 → 19:14 (45m break)  OverReg(>7h48m): 1h41m  OverMax(>10h): -31m
-====================================================================================================
+  🕰  | TIME RANGE          | 🐝 BUSY RECORD
+-----+---------------------+--------------------------------------------------------------------------------
+  ☕ | 08:42:52 → 11:55:07 | Spent 3h12m Driving a Pickup truck Mark Lt to Minneapolis #874
+  🌞 | 12:24:19 → 12:35:00 | Spent 10m Drinking a Belgian And French Ale Orval Trappist Ale with 2.6% #875
+  🌞 | 13:24:14 → 15:08:20 | Spent 1h44m Building App Tealgrammar 5.8.4 in Orc #876
+  🌞 | 15:09:27 → 15:24:27 | Spent 15m Driving a Van A4 Cabriolet to Orlando #877
+  🌞 | 15:24:27 → now      | Still busy with Eating a Frozen kahlua creme topped with Clementine #878
+-----+---------------------+--------------------------------------------------------------------------------
+  🧮 | 5H23M +BREAK: 5H23M | BUSY+IDLE: 15H15M  SKIP(<5M): 4  >REG(7H48M): -2H25M >MAX(10H): -4H37M
+-----+---------------------+--------------------------------------------------------------------------------
+Suggestestion: 09:00 → 14:23 (inc. 0m break), you're expected to be busy for another 2h25m
 ----
 
 == Example Punch Clock Report

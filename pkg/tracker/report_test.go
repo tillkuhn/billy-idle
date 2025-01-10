@@ -22,6 +22,7 @@ func Test_Report(t *testing.T) {
 		)
 	mock.ExpectClose()
 	var output bytes.Buffer
+	tr.opts.Out = &output
 	assert.NoError(t, tr.Report(context.Background(), &output))
 	assert.Contains(t, output.String(), "DejaVu")
 }
