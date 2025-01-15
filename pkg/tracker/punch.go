@@ -63,20 +63,19 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	// expected := // time.Duration(pDays) * t.opts.RegBusy
 	overtime := spentBusyTotal - plannedBusyTotal
 
-	// Table Footer with totals
-	table.SetFooter([]string{"", "", "Total\n",
-		fmt.Sprintf("%s\n%d days", FDur(spentBusyTotal), pDays),
-		"",
-		fmt.Sprintf("%v\n>%v", FDur(overtime), FDur(plannedBusyTotal)),
+	// Table Footer with Totals for the entire month
+	table.SetFooter([]string{"", "Total",
+		fmt.Sprintf("%d days", pDays),
+		FDur(spentBusyTotal),
+		FDur(plannedBusyTotal),
+		FDur(overtime),
 	}) // Add Footer
-	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{}, bold,
-		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, tablewriter.Colors{})
+	table.SetFooterColor(tablewriter.Colors{}, bold, bold,
+		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, bold)
 	table.Render()
 
 	color.Set(color.FgGreen)
-	// fmt.Printf("AVG/DAY: %v  REGULAR (%dd*%v): %v\n", tracker.FDur(spentBusyTotal/time.Duration(pDays)),  pDays, tracker.FDur(punchOpts.RegBusy) )
 	color.Unset()
-
 	return nil
 }
 
