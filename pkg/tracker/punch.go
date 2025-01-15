@@ -64,7 +64,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	overtime := spentBusyTotal - plannedBusyTotal
 
 	// Table Footer with Totals for the entire month
-	table.SetFooter([]string{"", "Total",
+	table.SetFooter([]string{"🧮", "Total",
 		fmt.Sprintf("%d days", pDays),
 		FDur(spentBusyTotal),
 		FDur(plannedBusyTotal),

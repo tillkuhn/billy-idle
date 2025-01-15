@@ -119,15 +119,11 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		table.SetFooter([]string{"🧮",
 			fmt.Sprintf("%s +break: %s", FDur(spentBusy), FDur((spentBusy + kitKat).Round(time.Minute))),
 			fmt.Sprintf("Busy+Idle: %s  Skip(<%v): %d  >Reg(%v): %v  >Max(%s): %v",
-				// first.BusyStart.Format("2006-01-02 Mon"),
-				// FDur(spentBusy), // busy time (total - idle)
-				// busy time including break
 				FDur(spentTotal),                      // total time both busy + idle
 				FDur(t.opts.MinBusy), skippedTooShort, // number of skipped records
 				FDur(t.opts.RegBusy) /* reg busy time e.g. (7:48) */, FDur(spentBusy-t.opts.RegBusy), // overtime
 				FDur(t.opts.MaxBusy), FDur(spentBusy-t.opts.MaxBusy), // over max
 			),
-			// fmt.Sprintf("%v\n>%v", FDur(overtime), FDur(plannedBusyTotal)),
 		}) // Add Footer
 		table.SetFooterColor(tablewriter.Colors{}, bold, tablewriter.Colors{})
 		table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
@@ -150,7 +146,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		}
 		_, _ = fmt.Fprintf(w, "Suggestion: %v → %v (inc. %vm break), %s!\n\n",
 			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"), // Simplified start
+			sugStart.Format("15:04"),                                              // Simplified start
 			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
 			kitKat.Round(time.Minute).Minutes(),                                   // break duration depending on total busy time
 			overInfo,
