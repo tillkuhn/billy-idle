@@ -10,21 +10,51 @@ import (
 )
 
 func Test_Report(t *testing.T) {
-	tr, mock := DBMock(t)
+	// https://go.dev/wiki/TableDrivenTests
+	tests := map[string]struct {
+		duration time.Duration
+		result   string
+	}{
+		"lessThanReg": {
+			duration: time.Hour * 6,
+			result:   "expected to be busy for another",
+		},
+		"overReg": {
+			duration: time.Hour * 9,
+			result:   "longer than the expected",
+		},
+		"overMax": {
+			duration: time.Hour * 11,
+			result:   "capped",
+		},
+	}
 
-	start := time.Now()
-	mock.ExpectQuery("SELECT (.*)").
-		WillReturnRows(
-			mock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
-				AddRow("1", start, start.Add(6*time.Minute), "Having a DejaVu").
-				AddRow("2", start, start.Add(3*time.Minute), "Debugging Code but only for s short time").
-				AddRow("3", start, nil, "Unfinished business"),
-		)
-	mock.ExpectClose()
-	var output bytes.Buffer
-	tr.opts.Out = &output
-	assert.NoError(t, tr.Report(context.Background(), &output))
-	assert.Contains(t, output.String(), "DejaVu")
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			tr, mock := DBMock(t)
+			start := time.Now()
+			mock.ExpectQuery("SELECT (.*)").
+				WillReturnRows(
+					mock.NewRows([]string{"id", "busy_start", "busy_end", "task"}).
+						AddRow("1", start, start.Add(5*time.Minute), "Having a DejaVu").
+						AddRow("2", start.Add(10*time.Minute), start.Add(10*time.Minute), "Debugging Code but only for s short time").
+						AddRow("2", start.Add(25*time.Minute), start.Add(test.duration), "Keeping test cases green"),
+					// AddRow("3", start.Add(50*time.Minute), nil, "Unfinished business"),
+				)
+			mock.ExpectClose()
+			var output bytes.Buffer
+			tr.opts.Out = &output
+			tr.opts.MaxBusy = 10 * time.Hour
+			tr.opts.RegBusy = 7*time.Hour + 48*time.Minute
+
+			err := tr.Report(context.Background(), &output)
+			assert.NoError(t, err)
+			assert.Contains(t, output.String(), "DejaVu")
+			assert.Contains(t, output.String(), test.result)
+			t.Log(output.String())
+		})
+	}
 }
 
 func Test_FormatDuration(t *testing.T) {
