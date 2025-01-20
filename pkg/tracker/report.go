@@ -60,10 +60,10 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		var skippedTooShort int
 
 		// headline per day
+		tableBold := tablewriter.Colors{tablewriter.Bold}
 		table := tablewriter.NewWriter(t.opts.Out)
-		bold := tablewriter.Colors{tablewriter.Bold}
 		table.SetHeader([]string{"🕰", "Time Range", "🐝 Busy Record"})
-		table.SetHeaderColor(bold, bold, bold)
+		table.SetHeaderColor(tableBold, tableBold, tableBold)
 		table.SetBorder(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -111,48 +111,60 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			}
 		}
 
-		// footer with summaries and assessment
-		// _, _ = fmt.Fprintln(w, strings.Repeat("-", sepLineLen))
-		kitKat := mandatoryBreak(spentBusy)
-		spentBusy = spentBusy.Round(time.Minute)
-		spentTotal = spentTotal.Round(time.Minute)
-		table.SetFooter([]string{"🧮",
-			fmt.Sprintf("%s +break: %s", FDur(spentBusy), FDur((spentBusy + kitKat).Round(time.Minute))),
-			fmt.Sprintf("Busy+Idle: %s  Skip(<%v): %d  >Reg(%v): %v  >Max(%s): %v",
-				FDur(spentTotal),                      // total time both busy + idle
-				FDur(t.opts.MinBusy), skippedTooShort, // number of skipped records
-				FDur(t.opts.RegBusy) /* reg busy time e.g. (7:48) */, FDur(spentBusy-t.opts.RegBusy), // overtime
-				FDur(t.opts.MaxBusy), FDur(spentBusy-t.opts.MaxBusy), // over max
-			),
-		}) // Add Footer
-		table.SetFooterColor(tablewriter.Colors{}, bold, tablewriter.Colors{})
-		table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
-		// tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, tablewriter.Colors{})
-
-		table.Render()
-
-		// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
-		sugStart, _ := time.Parse("15:04", "09:00")
-
-		// Suggestion for time entry:
-		overDur := spentBusy - t.opts.RegBusy
-		var overInfo string
-		if overDur > 0 {
-			color.Set(color.FgGreen)
-			overInfo = fmt.Sprintf("you've been busy %s longer than expected", FDur(overDur))
-		} else {
-			color.Set(color.FgHiMagenta)
-			overInfo = fmt.Sprintf("you're expected to be busy for another %s", FDur(overDur*-1))
-		}
-		_, _ = fmt.Fprintf(w, "Suggestion: %v → %v (inc. %vm break), %s!\n\n",
-			// first.BusyStart.Format("Monday"),
-			sugStart.Format("15:04"), // Simplified start
-			sugStart.Add((spentBusy + kitKat).Round(time.Minute)).Format("15:04"), // Simplified end
-			kitKat.Round(time.Minute).Minutes(),                                   // break duration depending on total busy time
-			overInfo,
-		)
-		color.Unset()
-		// _, _ = fmt.Fprintln(w, strings.Repeat("=", sepLineLen))
+		t.ReportDailyFooter(table, spentBusy, spentTotal, skippedTooShort)
 	}
 	return nil
+}
+
+// ReportDailyFooter renders summary per plus punch suggestion
+func (t *Tracker) ReportDailyFooter(table *tablewriter.Table, spentBusy time.Duration, spentTotal time.Duration, skippedTooShort int) {
+	// footer with summaries and assessment
+	kitKat := mandatoryBreak(spentBusy)
+	spentBusy = spentBusy.Round(time.Minute)
+	spentTotal = spentTotal.Round(time.Minute)
+	overReg := spentBusy - t.opts.RegBusy
+	overMax := spentBusy - t.opts.MaxBusy
+	table.SetFooter([]string{"🧮",
+		fmt.Sprintf("%s +break: %s", FDur(spentBusy), FDur((spentBusy + kitKat).Round(time.Minute))),
+		fmt.Sprintf("Busy+Idle: %s  Skip(<%v): %d  >Reg(%v): %v  >Max(%s): %v",
+			FDur(spentTotal),                      // total time both busy + idle
+			FDur(t.opts.MinBusy), skippedTooShort, // number of skipped records
+			FDur(t.opts.RegBusy) /* reg busy time e.g. (7:48) */, FDur(overReg), // overtime
+			FDur(t.opts.MaxBusy), FDur(overMax), // over max
+		),
+	})
+	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{})
+	table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
+	table.Render()
+
+	// Last Line: Suggestion for punch time entry
+	// todo: raise warning if totalBusy  is > 10h (or busyPlus > 10:45), since more than 10h are not allowed
+	sugStart, _ := time.Parse("15:04", "09:00")
+	sugDuration := spentBusy + kitKat // including break unless overMax > 0
+	var overInfo string
+	switch {
+	case overMax > 0:
+		{
+			color.Set(color.FgHiRed)
+			overInfo = fmt.Sprintf("you've been busy %s too long so entry was capped at %s", FDur(overMax), FDur(t.opts.MaxBusy))
+			sugDuration = t.opts.MaxBusy + kitKat
+		}
+	case overReg > 0:
+		{
+			color.Set(color.FgGreen)
+			overInfo = fmt.Sprintf("you've been busy %s longer than the expected %s", FDur(overReg), FDur(t.opts.RegBusy))
+		}
+	default:
+		{
+			color.Set(color.FgHiMagenta)
+			overInfo = fmt.Sprintf("you're expected to be busy for another %s", FDur(overReg*-1))
+		}
+	}
+	_, _ = fmt.Fprintf(t.opts.Out, "Suggestion: %v → %v (inc. %vm break), %s!\n\n",
+		sugStart.Format("15:04"), // Simplified start
+		sugStart.Add((sugDuration).Round(time.Minute)).Format("15:04"), // Simplified end
+		kitKat.Round(time.Minute).Minutes(),                            // break duration depending on total busy time
+		overInfo,
+	)
+	color.Unset()
 }
