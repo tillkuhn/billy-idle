@@ -13,7 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Tracker tracks idle state periodically and persist state changes in DB
+// Tracker tracks idle state periodically and persists state changes in DB
 type Tracker struct {
 	opts *Options
 	db   *sqlx.DB
@@ -57,7 +57,7 @@ func (t *Tracker) Track(ctx context.Context) {
 	for !done {
 		select {
 		case <-ctx.Done():
-			// make sure latest status is written to db, must use a fresh context
+			// we're finished here, make sure latest status is written to db, must use a fresh context
 			msg := fmt.Sprintf("🛑 Tracker stopped after %v %s time", ist.TimeSinceLastSwitch(), ist.State())
 			_ = t.completeTrackRecord(context.Background(), ist.id, msg)
 			done = true

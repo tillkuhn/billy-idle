@@ -39,6 +39,7 @@ func (t *Tracker) PunchReport(ctx context.Context) error {
 	for _, r := range recs {
 		spentDay := time.Duration(r.BusySecs) * time.Second
 		plannedDay := time.Duration(r.PlannedSecs) * time.Second
+
 		// handle calendar week, if it changes during the report, print an empty line
 		_, week := r.Day.ISOWeek() // week ranges from 1 to 53
 		if curWeek > 0 && curWeek != week {
