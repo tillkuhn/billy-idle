@@ -71,8 +71,8 @@ lint: ## Lint go code
 .PHONY: test
 test: lint ## Run tests with coverage, implies lint, excludes generated *.pb.go files
 	@if hash gotest 2>/dev/null; then \
-	  gotest -v -coverpkg=./... -coverprofile=coverage.out ./...; \
-	else go test -v -coverpkg=./... -coverprofile=coverage.out ./...; fi
+	  gotest -v -coverpkg=./... -coverprofile=coverage.out  $(shell go list ./... | grep -v internal/pb); \
+	else go test -v -coverpkg=./... -coverprofile=coverage.out $(shell go list ./... | grep -v internal/pb); fi
 	@go tool cover -func coverage.out | grep "total:"
 	go tool cover -html=coverage.out -o coverage.html
 	@echo For coverage report open coverage.html
