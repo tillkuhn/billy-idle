@@ -1,6 +1,6 @@
 // Go gRPC  Tutorials:
 //
-// https://grpc.io/docs/languages/go/quickstart/
+// https://grpc.io/docs/languages/go/quickstart/ and https://github.com/grpc/grpc-go/tree/master/examples/helloworld
 // https://grpc.io/docs/languages/go/basics/
 // https://pascalallen.medium.com/how-to-build-a-grpc-server-in-go-943f337c4e05
 //
@@ -21,7 +21,7 @@ package pb;
 service Billy {
   // set mode (see commends below for empty)
   rpc SetMode (ModeRequest) returns (ModeResponse) {}
-  rpc Status (google.protobuf.Empty) returns (ModeResponse) {}
+  rpc Status (google.protobuf.Empty) returns (StatusResponse) {}
 }
 
 // The request message containing the mode to set
@@ -32,6 +32,11 @@ message ModeRequest {
 // The response message containing the newly applied mode
 message ModeResponse {
   Mode mode = 1;
+}
+
+// The response message containing the newly applied mode
+message StatusResponse {
+  string message = 1;
 }
 
 // https://www.reddit.com/r/golang/comments/dysrzw/protobuf_and_enum_type/
