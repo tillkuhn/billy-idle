@@ -3,8 +3,12 @@ package tracker
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/tillkuhn/billy-idle/internal/pb"
+	"google.golang.org/grpc"
 	"log"
 	"math/rand/v2"
+	"net"
 	"os"
 	"sync"
 	"time"
@@ -13,11 +17,13 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Tracker tracks idle state periodically and persists state changes in DB
+// Tracker tracks idle state periodically and persists state changes in DB,
+// also used to implement gRPC BillyServer
 type Tracker struct {
 	opts *Options
 	db   *sqlx.DB
 	wg   sync.WaitGroup
+	pb.UnimplementedBillyServer
 }
 
 // New returns a new Tracker configured with the given Options
@@ -38,6 +44,28 @@ func NewWithDB(opts *Options, db *sqlx.DB) *Tracker {
 		opts: opts,
 		db:   db,
 	}
+}
+
+// ServeGRCP experimental Server for gRCP support
+func (t *Tracker) ServeGRCP() error {
+	grpcPort := 50051
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
+	if err != nil {
+		return err
+	}
+	s := grpc.NewServer()
+	pb.RegisterBillyServer(s, t)
+	log.Printf("gRCP server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Status implements pb.BillyServer
+func (t *Tracker) Status(_ context.Context, _ *empty.Empty) (*pb.StatusResponse, error) {
+	log.Println("Received: status request")
+	return &pb.StatusResponse{Message: "Hello I am up and running"}, nil
 }
 
 // Track starts the idle/Busy tracker in a loop that runs until the context is cancelled
