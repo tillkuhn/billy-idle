@@ -69,7 +69,7 @@ lint: ## Lint go code
 	@golangci-lint run --fix
 
 .PHONY: test
-test: lint ## Run tests with coverage, implies lint
+test: lint ## Run tests with coverage, implies lint, excludes generated *.pb.go files
 	@if hash gotest 2>/dev/null; then \
 	  gotest -v -coverpkg=./... -coverprofile=coverage.out ./...; \
 	else go test -v -coverpkg=./... -coverprofile=coverage.out ./...; fi
@@ -135,6 +135,24 @@ install: clean build ## Install as launchd managed service
 	@ps -ef |grep -v grep |grep $(HOME)/bin/billy
 	@tail $(HOME)/.billy-idle/default/agent.log
 
+
+# https://grpc.io/docs/languages/go/basics/ + https://grpc.io/docs/languages/go/quickstart/
+# for compiler plugins, make sure "$PATH:$(go env GOPATH)/bin" is on your path
+.PHONY: grpc-install
+grpc-install: ## Installs protobuf and Go gRPC compiler plugins
+	brew list --versions protobuf || brew install protobuf
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@protoc-gen-go --version || echo 'Make sure GOPATH/bin is on your PATH'
+	@protoc-gen-go-grpc --version
+	go get -u google.golang.org/grpc
+
+
+.PHONY: grpc-gen
+grpc-gen: ## Generate gRPC Code with protoc
+	protoc --go_out=. --go_opt=paths=source_relative \
+	  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+	  internal/pb/billy.proto
 
 .PHONY: logs
 logs: ## Show agent logs
