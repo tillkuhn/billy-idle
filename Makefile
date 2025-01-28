@@ -27,6 +27,7 @@ endif
 
 APP_NAME=billy-idle
 BINARY ?= billy
+DEFAULT_ENV ?= default
 LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 
 #-------------------
@@ -68,11 +69,13 @@ lint: ## Lint go code
 	@go fmt ./...
 	@golangci-lint run --fix
 
+# $(shell go list ./... | grep -v internal/pb)
 .PHONY: test
 test: lint ## Run tests with coverage, implies lint, excludes generated *.pb.go files
 	@if hash gotest 2>/dev/null; then \
-	  gotest -v -coverpkg=./... -coverprofile=coverage.out  $(shell go list ./... | grep -v internal/pb); \
-	else go test -v -coverpkg=./... -coverprofile=coverage.out $(shell go list ./... | grep -v internal/pb); fi
+	  gotest -v -coverpkg=./... -coverprofile=coverage.out.tmp  ./... ; \
+	else go test -v -coverpkg=./... -coverprofile=coverage.out.tmp ./... ; fi
+	grep -v ".pb.go" coverage.out.tmp > coverage.out
 	@go tool cover -func coverage.out | grep "total:"
 	go tool cover -html=coverage.out -o coverage.html
 	@echo For coverage report open coverage.html
@@ -103,15 +106,19 @@ run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
 
 .PHONY: punch
 punch: ## Show punch clock report for default db
-	go run main.go --debug punch --env default
+	go run main.go --debug punch --env $(DEFAULT_ENV)
+
+.PHONY: wsp
+wsp: ## Show status using gRPC Client
+	go run main.go --debug wsp
+
+.PHONY: report
+report: ## Show report for default db
+	go run main.go --debug report --env $(DEFAULT_ENV)
 
 .PHONY: report-dev
 report-dev: ## Show report for dev env db
 	go run main.go --debug report --env dev
-
-.PHONY: report
-report: ## Show report for default db
-	go run main.go --debug report --env default
 
 .PHONY: run-help
 run-help: ## Run app in help mode
