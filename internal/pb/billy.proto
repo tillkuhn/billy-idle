@@ -14,6 +14,7 @@ syntax = "proto3";
 option go_package = "github.com/tillkuhn/billy-idle/pb";
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 package pb;
 
@@ -37,6 +38,7 @@ message ModeResponse {
 // The response message containing the newly applied mode
 message StatusResponse {
   string message = 1;
+  google.protobuf.Timestamp time = 7;
 }
 
 // https://www.reddit.com/r/golang/comments/dysrzw/protobuf_and_enum_type/
