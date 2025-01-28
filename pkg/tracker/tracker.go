@@ -5,25 +5,37 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"net"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/tillkuhn/billy-idle/internal/pb"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
 )
 
-// Tracker tracks idle state periodically and persists state changes in DB
+// Tracker tracks idle state periodically and persists state changes in DB,
+// also used to implement gRPC BillyServer
 type Tracker struct {
-	opts *Options
-	db   *sqlx.DB
-	wg   sync.WaitGroup
+	opts                        *Options
+	db                          *sqlx.DB
+	grpcServer                  *grpc.Server
+	wg                          sync.WaitGroup
+	pb.UnimplementedBillyServer // Tracker implements billy gRPC Server
 }
 
 // New returns a new Tracker configured with the given Options
 func New(opts *Options) *Tracker {
 	if opts.Out == nil {
 		opts.Out = os.Stdout
+	}
+	if opts.GRPCPort == 0 {
+		opts.GRPCPort = 50051
 	}
 	db, err := initDB(opts)
 	if err != nil {
@@ -35,9 +47,33 @@ func New(opts *Options) *Tracker {
 // NewWithDB returns a new Tracker configured with the given Options and DB, good for testing
 func NewWithDB(opts *Options, db *sqlx.DB) *Tracker {
 	return &Tracker{
-		opts: opts,
-		db:   db,
+		opts:       opts,
+		db:         db,
+		grpcServer: grpc.NewServer(),
 	}
+}
+
+// ServeGRCP experimental Server for gRCP support
+func (t *Tracker) ServeGRCP() error {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", t.opts.GRPCPort))
+	if err != nil {
+		return err
+	}
+	log.Printf("👂 Registering gRCP server to listen at %v", lis.Addr())
+	pb.RegisterBillyServer(t.grpcServer, t)
+	if err := t.grpcServer.Serve(lis); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Status as per pb.BillyServer
+func (t *Tracker) Status(_ context.Context, _ *empty.Empty) (*pb.StatusResponse, error) {
+	log.Println("Received: status request")
+	return &pb.StatusResponse{
+		Time:    timestamppb.Now(),
+		Message: "Hi! I am up and running in env=" + t.opts.Env,
+	}, nil
 }
 
 // Track starts the idle/Busy tracker in a loop that runs until the context is cancelled
@@ -60,6 +96,8 @@ func (t *Tracker) Track(ctx context.Context) {
 			// we're finished here, make sure latest status is written to db, must use a fresh context
 			msg := fmt.Sprintf("🛑 Tracker stopped after %v %s time", ist.TimeSinceLastSwitch(), ist.State())
 			_ = t.completeTrackRecord(context.Background(), ist.id, msg)
+			log.Printf("👂 Stopping gRCP server on port %d", t.opts.GRPCPort)
+			t.grpcServer.GracefulStop()
 			done = true
 		default:
 			idleMillis, err := IdleTime(ctx, t.opts.Cmd)

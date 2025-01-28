@@ -53,6 +53,12 @@ func track(ctx context.Context) {
 	go func() {
 		t.Track(ctx)
 	}()
+	// Experimental gRPC server
+	go func() {
+		if err := t.ServeGRCP(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	sig := <-sigChan
 	log.Printf("🔫 Received signal %v, initiate shutdown", sig)

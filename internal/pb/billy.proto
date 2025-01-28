@@ -1,0 +1,61 @@
+// Go gRPC  Tutorials:
+//
+// https://grpc.io/docs/languages/go/quickstart/ and https://github.com/grpc/grpc-go/tree/master/examples/helloworld
+// https://grpc.io/docs/languages/go/basics/
+// https://pascalallen.medium.com/how-to-build-a-grpc-server-in-go-943f337c4e05
+//
+// Compile with
+// protoc --go_out=. --go_opt=paths=source_relative \
+//    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+//    billy.proto
+
+syntax = "proto3";
+
+option go_package = "github.com/tillkuhn/billy-idle/pb";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+package pb;
+
+// The greeting service definition.
+service Billy {
+  // set mode (see commends below for empty)
+  rpc SetMode (ModeRequest) returns (ModeResponse) {}
+  rpc Status (google.protobuf.Empty) returns (StatusResponse) {}
+}
+
+// The request message containing the mode to set
+message ModeRequest {
+  Mode mode = 1;
+}
+
+// The response message containing the newly applied mode
+message ModeResponse {
+  Mode mode = 1;
+}
+
+// The response message containing the newly applied mode
+message StatusResponse {
+  string message = 1;
+  google.protobuf.Timestamp time = 7;
+}
+
+// https://www.reddit.com/r/golang/comments/dysrzw/protobuf_and_enum_type/
+// https://protobuf.dev/programming-guides/enum/
+enum Mode {
+  AUTO = 0;
+  IDLE = 1;
+  BUSY = 2;
+}
+
+// https://stackoverflow.com/questions/31768665/can-i-define-a-grpc-call-with-a-null-request-or-response
+// Looking through the default proto files, I came across Empty that is exactly like the Null type I suggested above :)
+// A generic empty message that you can re-use to avoid defining duplicated
+// empty messages in your APIs. A typical example is to use it as the request
+// or the response type of an API method. For instance:
+//
+//     service Foo {
+//       rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);
+//     }
+//
