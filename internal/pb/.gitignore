@@ -1,0 +1,2 @@
+# generated protoc files should *not* be under version control
+*.pb.go

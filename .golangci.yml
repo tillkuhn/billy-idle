@@ -70,6 +70,8 @@ issues:
       linters: [ gochecknoglobals,mnd ]
     - path: cmd/track.go
       linters: [ gochecknoglobals,mnd ]
+    - path: cmd/wsp.go
+      linters: [ gochecknoglobals,mnd ]
     - path: pkg/tracker/report.go
       linters: [ mnd ] # magic number detection is annoying here
     - path: pkg/tracker/tracker.go

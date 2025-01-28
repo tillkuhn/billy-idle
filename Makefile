@@ -27,6 +27,7 @@ endif
 
 APP_NAME=billy-idle
 BINARY ?= billy
+DEFAULT_ENV ?= default
 LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 
 #-------------------
@@ -68,11 +69,13 @@ lint: ## Lint go code
 	@go fmt ./...
 	@golangci-lint run --fix
 
+# $(shell go list ./... | grep -v internal/pb)
 .PHONY: test
-test: lint ## Run tests with coverage, implies lint
+test: lint ## Run tests with coverage, implies lint, excludes generated *.pb.go files
 	@if hash gotest 2>/dev/null; then \
-	  gotest -v -coverpkg=./... -coverprofile=coverage.out ./...; \
-	else go test -v -coverpkg=./... -coverprofile=coverage.out ./...; fi
+	  gotest -v -coverpkg=./... -coverprofile=coverage.out.tmp  ./... ; \
+	else go test -v -coverpkg=./... -coverprofile=coverage.out.tmp ./... ; fi
+	grep -v ".pb.go" coverage.out.tmp > coverage.out
 	@go tool cover -func coverage.out | grep "total:"
 	go tool cover -html=coverage.out -o coverage.html
 	@echo For coverage report open coverage.html
@@ -103,15 +106,19 @@ run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
 
 .PHONY: punch
 punch: ## Show punch clock report for default db
-	go run main.go --debug punch --env default
+	go run main.go --debug punch --env $(DEFAULT_ENV)
+
+.PHONY: wsp
+wsp: ## Show status using gRPC Client
+	go run main.go --debug wsp
+
+.PHONY: report
+report: ## Show report for default db
+	go run main.go --debug report --env $(DEFAULT_ENV)
 
 .PHONY: report-dev
 report-dev: ## Show report for dev env db
 	go run main.go --debug report --env dev
-
-.PHONY: report
-report: ## Show report for default db
-	go run main.go --debug report --env default
 
 .PHONY: run-help
 run-help: ## Run app in help mode
@@ -135,6 +142,24 @@ install: clean build ## Install as launchd managed service
 	@ps -ef |grep -v grep |grep $(HOME)/bin/billy
 	@tail $(HOME)/.billy-idle/default/agent.log
 
+
+# https://grpc.io/docs/languages/go/basics/ + https://grpc.io/docs/languages/go/quickstart/
+# for compiler plugins, make sure "$PATH:$(go env GOPATH)/bin" is on your path
+.PHONY: grpc-install
+grpc-install: ## Installs protobuf and Go gRPC compiler plugins
+	brew list --versions protobuf || brew install protobuf
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@protoc-gen-go --version || echo 'Make sure GOPATH/bin is on your PATH'
+	@protoc-gen-go-grpc --version
+	go get -u google.golang.org/grpc
+
+
+.PHONY: grpc-gen
+grpc-gen: ## Generate gRPC Code with protoc
+	protoc --go_out=. --go_opt=paths=source_relative \
+	  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+	  internal/pb/billy.proto
 
 .PHONY: logs
 logs: ## Show agent logs
