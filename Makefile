@@ -28,6 +28,7 @@ endif
 APP_NAME=billy-idle
 BINARY ?= billy
 DEFAULT_ENV ?= default
+DEV_PORT ?= 50052
 LAUNCHD_LABEL ?= com.github.tillkuhn.$(APP_NAME)
 
 #-------------------
@@ -102,7 +103,7 @@ vulncheck: ## Run govulncheck scanner
 
 .PHONY: run
 run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
-	go run main.go --debug track --env dev --idle 10s --interval 5s
+	go run main.go --debug track --env dev --idle 10s --interval 5s --port $(DEV_PORT)
 
 .PHONY: punch
 punch: ## Show punch clock report for default db
@@ -110,15 +111,15 @@ punch: ## Show punch clock report for default db
 
 .PHONY: wsp
 wsp: ## Show status using gRPC Client
-	go run main.go --debug wsp
+	go run main.go --debug wsp --port $(DEV_PORT)
 
 .PHONY: report
-report: ## Show report for default db
-	go run main.go --debug report --env $(DEFAULT_ENV)
-
-.PHONY: report-dev
-report-dev: ## Show report for dev env db
+report: ## Show report for dev env db
 	go run main.go --debug report --env dev
+
+.PHONY: report-default
+report-default: ## Show report for default db
+	go run main.go --debug report --env $(DEFAULT_ENV)
 
 .PHONY: run-help
 run-help: ## Run app in help mode

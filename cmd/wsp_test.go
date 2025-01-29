@@ -20,7 +20,7 @@ func TestWSPStatusError(t *testing.T) {
 	// Returns "Error: rpc error: code = DeadlineExceeded desc = context deadline exceeded\nUsage:\n  b
 	// if no server
 	opts := &tracker.Options{
-		GRPCPort: grpcPort,
+		Port:     grpcPort,
 		ClientID: "test",
 		AppRoot:  defaultAppRoot(),
 	}
@@ -34,5 +34,5 @@ func TestWSPStatusError(t *testing.T) {
 	// assert.NoError(t, tr.ServeGRCP())
 	err := rootCmd.Execute()
 	assert.NoError(t, err)
-	assert.Contains(t, actual.String(), "I am up and running")
+	assert.Contains(t, actual.String(), "state=busy")
 }
