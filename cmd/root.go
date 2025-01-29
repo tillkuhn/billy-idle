@@ -45,6 +45,9 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&trackOpts.Debug, "debug", "d", false, "Debug checkpoints")
+	// On error in RunE, do not display usage
+	// See https://github.com/spf13/cobra/issues/340 and https://github.com/spf13/cobra/issues/564
+	rootCmd.SilenceUsage = true
 }
 
 // defaultAppRoot returns the default app root directory
