@@ -26,6 +26,7 @@ type Tracker struct {
 	db                          *sqlx.DB
 	grpcServer                  *grpc.Server
 	wg                          sync.WaitGroup
+	ist                         IdleState
 	pb.UnimplementedBillyServer // Tracker implements billy gRPC Server
 }
 
@@ -34,8 +35,8 @@ func New(opts *Options) *Tracker {
 	if opts.Out == nil {
 		opts.Out = os.Stdout
 	}
-	if opts.GRPCPort == 0 {
-		opts.GRPCPort = 50051
+	if opts.Port == 0 {
+		opts.Port = 50051
 	}
 	db, err := initDB(opts)
 	if err != nil {
@@ -55,7 +56,7 @@ func NewWithDB(opts *Options, db *sqlx.DB) *Tracker {
 
 // ServeGRCP experimental Server for gRCP support
 func (t *Tracker) ServeGRCP() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", t.opts.GRPCPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", t.opts.Port))
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (t *Tracker) Status(_ context.Context, _ *empty.Empty) (*pb.StatusResponse,
 	log.Println("Received: status request")
 	return &pb.StatusResponse{
 		Time:    timestamppb.Now(),
-		Message: "Hi! I am up and running in env=" + t.opts.Env,
+		Message: fmt.Sprintf("Hello, I'm Billy@%s and my status is %s", t.opts.Env, t.ist.String()),
 	}, nil
 }
 
@@ -85,45 +86,44 @@ func (t *Tracker) Track(ctx context.Context) {
 		_ = db.Close()
 	}(t.db) // last defer is executed first (LIFO)
 
-	var ist IdleState
-	ist.SwitchState() // start in idle mode (idle = true)
+	t.ist.SwitchState() // start in idle mode (idle = true)
 	log.Printf("👀 Tracker started in idle mode with auto-idle>=%v interval=%v", t.opts.IdleTolerance, t.opts.CheckInterval)
 
 	var done bool
 	for !done {
 		select {
 		case <-ctx.Done():
-			// we're finished here, make sure latest status is written to db, must use a fresh context
-			msg := fmt.Sprintf("🛑 Tracker stopped after %v %s time", ist.TimeSinceLastSwitch(), ist.State())
-			_ = t.completeTrackRecord(context.Background(), ist.id, msg)
-			log.Printf("👂 Stopping gRCP server on port %d", t.opts.GRPCPort)
+			log.Printf("👂 Stopping gRCP server on port %d", t.opts.Port)
 			t.grpcServer.GracefulStop()
+			// we're finished here, make sure latest status is written to db, must use a fresh context
+			msg := fmt.Sprintf("🛑 Stopping tracker after %v %s time", t.ist.TimeSinceLastSwitch(), t.ist.State())
+			_ = t.completeTrackRecord(context.Background(), t.ist.id, msg)
 			done = true
 		default:
 			idleMillis, err := IdleTime(ctx, t.opts.Cmd)
 			switch {
 			case err != nil:
 				log.Println(err.Error())
-			case ist.ExceedsIdleTolerance(idleMillis, t.opts.IdleTolerance):
-				busySince := ist.TimeSinceLastSwitch()
-				ist.SwitchState()
-				msg := fmt.Sprintf("%s Enter idle mode after %v busy time", ist.Icon(), busySince)
-				_ = t.completeTrackRecord(ctx, ist.id, msg)
-			case ist.ExceedsCheckTolerance(t.opts.IdleTolerance):
-				ist.SwitchState()
+			case t.ist.ExceedsIdleTolerance(idleMillis, t.opts.IdleTolerance):
+				busySince := t.ist.TimeSinceLastSwitch()
+				t.ist.SwitchState()
+				msg := fmt.Sprintf("%s Enter idle mode after %v busy time", t.ist.Icon(), busySince)
+				_ = t.completeTrackRecord(ctx, t.ist.id, msg)
+			case t.ist.ExceedsCheckTolerance(t.opts.IdleTolerance):
+				t.ist.SwitchState()
 				msg := fmt.Sprintf("%s Enter idle mode after sleep mode was detected at %s (%v ago)",
-					ist.Icon(), ist.lastCheck.Format(time.RFC3339), ist.TimeSinceLastCheck())
+					t.ist.Icon(), t.ist.lastCheck.Format(time.RFC3339), t.ist.TimeSinceLastCheck())
 				// We have to date back the end of the Busy period to the last known active check
 				// Oh, you have to love Go's time and duration handling: https://stackoverflow.com/a/26285835/4292075
-				_ = t.completeTrackRecordWithTime(ctx, ist.id, msg, time.Now().Add(ist.TimeSinceLastCheck()*-1))
-			case ist.IsBusy(idleMillis, t.opts.IdleTolerance):
-				idleSince := ist.TimeSinceLastSwitch()
-				ist.SwitchState()
-				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", ist.Icon(), idleSince)
-				ist.id, _ = t.newTrackRecord(ctx, msg)
+				_ = t.completeTrackRecordWithTime(ctx, t.ist.id, msg, time.Now().Add(t.ist.TimeSinceLastCheck()*-1))
+			case t.ist.IsBusy(idleMillis, t.opts.IdleTolerance):
+				idleSince := t.ist.TimeSinceLastSwitch()
+				t.ist.SwitchState()
+				msg := fmt.Sprintf("%s Enter busy mode after %v idle time", t.ist.Icon(), idleSince)
+				t.ist.id, _ = t.newTrackRecord(ctx, msg)
 			}
-			t.checkpoint(ist, idleMillis) // outputs current state details if debug is enabled
-			ist.lastCheck = time.Now()
+			t.checkpoint(idleMillis) // outputs current state details if debug is enabled
+			t.ist.lastCheck = time.Now()
 
 			// time.Sleep doesn't react to context cancellation, but context.WithTimeout does
 			sleep, cancel := context.WithTimeout(ctx, t.opts.CheckInterval)
@@ -139,14 +139,14 @@ func (t *Tracker) WaitClose() {
 }
 
 // checkpoint print debug info on current state
-func (t *Tracker) checkpoint(ist IdleState, idleMillis int64) {
+func (t *Tracker) checkpoint(idleMillis int64) {
 	if t.opts.Debug {
 		idleD := (time.Duration(idleMillis) * time.Millisecond).Round(time.Second)
-		asInfo := ist.String()
-		if ist.Busy() {
+		asInfo := t.ist.String()
+		if t.ist.Busy() {
 			asInfo = fmt.Sprintf("%s idleSwitchIn=%v", asInfo, t.opts.IdleTolerance-idleD)
 		}
-		log.Printf("%s Checkpoint idleTime=%v %s", ist.Icon(), idleD, asInfo)
+		log.Printf("%s Checkpoint idleTime=%v %s", t.ist.Icon(), idleD, asInfo)
 	}
 }
 
@@ -157,7 +157,7 @@ func (t *Tracker) newTrackRecord(ctx context.Context, msg string) (int, error) {
 		return 0, err
 	}
 	var id int
-	// Golang SQL insert row and get returning ID example: https://gist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
+	// Golang SQL insert row and get returning ID example: https://gt.ist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
 	task := randomTask()
 	err = statement.QueryRowContext(ctx, msg, t.opts.ClientID, task, time.Now().Round(time.Second)).Scan(&id)
 	if err != nil {

@@ -22,7 +22,8 @@ type Options struct {
 	MaxBusy       time.Duration
 	RegBusy       time.Duration
 	Out           io.Writer
-	GRPCPort      int
+	// Port for gRPC Communication
+	Port int
 }
 
 func (o Options) AppDir() string {

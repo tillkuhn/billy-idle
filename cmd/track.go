@@ -41,6 +41,7 @@ func init() {
 	trackCmd.PersistentFlags().BoolVar(&trackOpts.DropCreate, "drop-create", false, "Drop and re-create db schema on startup")
 	trackCmd.PersistentFlags().DurationVarP(&trackOpts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
 	trackCmd.PersistentFlags().DurationVarP(&trackOpts.IdleTolerance, "idle", "m", 10*time.Second, "Max tolerated idle time before client enters idle state")
+	trackCmd.PersistentFlags().IntVarP(&trackOpts.Port, "port", "p", 50051, "Port for gRPC Communication")
 }
 
 func track(ctx context.Context) {
