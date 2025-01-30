@@ -63,9 +63,13 @@ func (t TrackRecord) Duration() time.Duration {
 
 // IdleState represents the current state
 type IdleState struct {
-	id         int
-	idle       bool
-	lastCheck  time.Time
+	// id current record id for the active record
+	id int
+	// idle if false, client is considered busy
+	idle bool
+	// lastCheck holds the timestamp when the last idle check took place
+	lastCheck time.Time
+	// lastSwitch holds the timestamp when state last switch from idle to busy or vice versa
 	lastSwitch time.Time
 }
 

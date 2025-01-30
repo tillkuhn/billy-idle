@@ -22,11 +22,13 @@ import (
 // Tracker tracks idle state periodically and persists state changes in DB,
 // also used to implement gRPC BillyServer
 type Tracker struct {
-	opts                        *Options
-	db                          *sqlx.DB
-	grpcServer                  *grpc.Server
-	wg                          sync.WaitGroup
-	ist                         IdleState
+	opts       *Options
+	db         *sqlx.DB
+	grpcServer *grpc.Server
+	wg         sync.WaitGroup
+	ist        IdleState
+
+	// UnimplementedBillyServer must be embedded to have forward-compatible implementations.
 	pb.UnimplementedBillyServer // Tracker implements billy gRPC Server
 }
 
@@ -68,12 +70,20 @@ func (t *Tracker) ServeGRCP() error {
 	return nil
 }
 
-// Status as per pb.BillyServer
-func (t *Tracker) Status(_ context.Context, _ *empty.Empty) (*pb.StatusResponse, error) {
-	log.Println("Received: status request")
+// WhatsUp status info as per pb.BillyServer
+func (t *Tracker) WhatsUp(_ context.Context, _ *empty.Empty) (*pb.StatusResponse, error) {
+	log.Println("Received 'What's up?' request")
 	return &pb.StatusResponse{
 		Time:    timestamppb.Now(),
 		Message: fmt.Sprintf("Hello, I'm Billy@%s and my status is %s", t.opts.Env, t.ist.String()),
+	}, nil
+}
+
+func (t *Tracker) SuspendTracking(_ context.Context, str *pb.SuspendTrackingRequest) (*pb.SuspendTrackingResponse, error) {
+	log.Println("Received 'SuspendTracking' request for duration " + str.Duration.String())
+	return &pb.SuspendTrackingResponse{
+		PreviousIdleState: false,
+		CurrentIdleState:  true,
 	}, nil
 }
 

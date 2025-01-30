@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -40,12 +41,17 @@ func status(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	// https://github.com/grpc/grpc-go/blob/master/examples/features/wait_for_ready/main.go#L93
-	r, err := c.Status(ctx, &empty.Empty{}, grpc.WaitForReady(true))
+	r, err := c.WhatsUp(ctx, &empty.Empty{}, grpc.WaitForReady(true))
 	if err != nil {
 		return err
 	}
-	_, _ = rootCmd.OutOrStdout().Write([]byte("Response: " + r.GetMessage() + "\n"))
-	// log.Printf("Greeting: %s", r.GetMessage())
+	_, _ = fmt.Fprintf(rootCmd.OutOrStdout(), "Response: %s\n", r.GetMessage())
+	// req := &pb.SuspendTrackingRequest{
+	//	IdleState: true,
+	//	Duration:  duration pb.New(2 * time.Millisecond),
+	//}
+	//resp, err := c.SuspendTracking(ctx, req, grpc.WaitForReady(true))
+	//_, _ = fmt.Fprintf(rootCmd.OutOrStdout(), "Response: %v err=%v\n", resp, err)
 	return nil
 }
 
