@@ -10,17 +10,17 @@ import (
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
-var grpcPort = 50052 // use different port for test to avoid conflicts
+var grpcTestPort = 50052 // use different port for test to avoid conflicts
 func TestWSPStatusError(t *testing.T) {
 	actual := new(bytes.Buffer)
 	rootCmd.SetOut(actual)
 	rootCmd.SetErr(actual)
-	wspArgs := []string{"--port", strconv.Itoa(grpcPort)}
+	wspArgs := []string{"--port", strconv.Itoa(grpcTestPort)}
 	rootCmd.SetArgs(slices.Insert(wspArgs, 0, wspCmd.Use))
 	// Returns "Error: rpc error: code = DeadlineExceeded desc = context deadline exceeded\nUsage:\n  b
 	// if no server
 	opts := &tracker.Options{
-		Port:     grpcPort,
+		Port:     grpcTestPort,
 		ClientID: "test",
 		AppRoot:  defaultAppRoot(),
 	}

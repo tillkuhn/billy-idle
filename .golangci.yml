@@ -62,6 +62,8 @@ issues:
     # this is the exception for commit, data and version variable which with pass in using ldflags
     - path: internal/version/version.go
       linters: [ gochecknoglobals ]
+    - path: cmd/idle.go
+      linters: [ gochecknoglobals,mnd ]
     - path: cmd/punch.go
       linters: [ gochecknoglobals,mnd ]
     - path: cmd/report.go
