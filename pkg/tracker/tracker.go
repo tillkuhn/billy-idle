@@ -79,11 +79,13 @@ func (t *Tracker) WhatsUp(_ context.Context, _ *empty.Empty) (*pb.StatusResponse
 	}, nil
 }
 
-func (t *Tracker) SuspendTracking(_ context.Context, str *pb.SuspendTrackingRequest) (*pb.SuspendTrackingResponse, error) {
-	log.Println("Received 'SuspendTracking' request for duration " + str.Duration.String())
-	return &pb.SuspendTrackingResponse{
-		PreviousIdleState: false,
-		CurrentIdleState:  true,
+func (t *Tracker) Suspend(_ context.Context, str *pb.SuspendRequest) (*pb.SuspendResponse, error) {
+	log.Printf("Received 'SuspendTracking' request for state=%v duration=%v ... TO BE IMPLEMENTED\n", str.State, str.Duration.String())
+	until := time.Now().Add(str.Duration.AsDuration())
+	return &pb.SuspendResponse{
+		PreviousState: pb.State_IDLE,
+		State:         pb.State_IDLE,
+		Until:         timestamppb.New(until),
 	}, nil
 }
 

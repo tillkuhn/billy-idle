@@ -14,10 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	gRPCPort int
-)
-
 // wspCmd represents the wsp command
 var wspCmd = &cobra.Command{
 	Use:   "wsp",
@@ -46,26 +42,10 @@ func status(ctx context.Context) error {
 		return err
 	}
 	_, _ = fmt.Fprintf(rootCmd.OutOrStdout(), "Response: %s\n", r.GetMessage())
-	// req := &pb.SuspendTrackingRequest{
-	//	IdleState: true,
-	//	Duration:  duration pb.New(2 * time.Millisecond),
-	//}
-	//resp, err := c.SuspendTracking(ctx, req, grpc.WaitForReady(true))
-	//_, _ = fmt.Fprintf(rootCmd.OutOrStdout(), "Response: %v err=%v\n", resp, err)
 	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(wspCmd)
-	wspCmd.PersistentFlags().IntVar(&gRPCPort, "port", 50051, "Port for gRPC Communication")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// wspCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// wspCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// wspCmd.PersistentFlags().IntVar(&gRPCPort, "port", 50051, "Port for gRPC Communication")
 }

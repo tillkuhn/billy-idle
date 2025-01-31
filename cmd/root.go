@@ -15,6 +15,7 @@ var (
 	version = "latest"
 	date    = "now"
 	// unused: commit, builtBy
+	gRPCPort int
 )
 
 var ctxCancel context.CancelFunc
@@ -45,6 +46,8 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&trackOpts.Debug, "debug", "d", false, "Debug checkpoints")
+	rootCmd.PersistentFlags().IntVar(&gRPCPort, "port", 50051, "Port for gRPC Communication")
+
 	// On error in RunE, do not display usage
 	// See https://github.com/spf13/cobra/issues/340 and https://github.com/spf13/cobra/issues/564
 	rootCmd.SilenceUsage = true
@@ -69,3 +72,18 @@ func defaultEnv() string {
 	}
 	return "default"
 }
+
+// func client() {
+//	addr := "localhost:" + strconv.Itoa(gRPCPort)
+//	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+//	if err != nil {
+//		return err
+//	}
+//	defer func(conn *grpc.ClientConn) { _ = conn.Close() }(conn)
+//	c := pb.NewBillyClient(conn)
+//
+//	// Contact the server and print out its response.
+//	ctx, cancel := context.WithTimeout(ctx, time.Second)
+//	defer cancel()
+//	// https://github.com/grpc/grpc-go/blob/master/examples/features/wait_for_ready/main.go#L93
+//}

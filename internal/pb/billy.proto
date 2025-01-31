@@ -25,43 +25,34 @@ package pb;
 // The Billy Service Definition (a rpc can only take a single argument)
 service Billy {
   // set mode (see commends below for empty)
-  rpc SetMode (ModeRequest) returns (ModeResponse) {}
   rpc WhatsUp (google.protobuf.Empty) returns (StatusResponse) {}
-  rpc SuspendTracking (SuspendTrackingRequest) returns (SuspendTrackingResponse) {}
+  rpc Suspend (SuspendRequest) returns (SuspendResponse) {}
 }
 
-message SuspendTrackingRequest {
-  bool idleState = 1;
+message SuspendRequest {
+  State state = 1;
   google.protobuf.Duration duration = 2;
 }
 
-message SuspendTrackingResponse {
-  bool previousIdleState = 1;
-  bool currentIdleState = 2;
-}
-
-// The request message containing the mode to set
-message ModeRequest {
-  Mode mode = 1;
-}
-
-// The response message containing the newly applied mode
-message ModeResponse {
-  Mode mode = 1;
+message SuspendResponse {
+  // bool previousIdleState = 1;
+  //bool currentIdleState = 2;
+  State previousState = 1;
+  State state = 2;
+  google.protobuf.Timestamp until = 3;
 }
 
 // The response message containing the newly applied mode
 message StatusResponse {
   string message = 1;
-  google.protobuf.Timestamp time = 7;
+  google.protobuf.Timestamp time = 2;
 }
 
 // https://www.reddit.com/r/golang/comments/dysrzw/protobuf_and_enum_type/
 // https://protobuf.dev/programming-guides/enum/
-enum Mode {
-  AUTO = 0;
-  IDLE = 1;
-  BUSY = 2;
+enum State {
+  IDLE = 0;
+  BUSY = 1;
 }
 
 // https://stackoverflow.com/questions/31768665/can-i-define-a-grpc-call-with-a-null-request-or-response
