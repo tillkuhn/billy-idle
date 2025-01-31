@@ -4,8 +4,13 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/tillkuhn/billy-idle/internal/pb"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/spf13/cobra"
 )
@@ -76,17 +81,14 @@ func defaultEnv() string {
 	return "default"
 }
 
-// func client() {
-//	addr := "localhost:" + strconv.Itoa(gRPCPort)
-//	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-//	if err != nil {
-//		return err
-//	}
-//	defer func(conn *grpc.ClientConn) { _ = conn.Close() }(conn)
-//	c := pb.NewBillyClient(conn)
-//
-//	// Contact the server and print out its response.
-//	ctx, cancel := context.WithTimeout(ctx, time.Second)
-//	defer cancel()
-//	// https://github.com/grpc/grpc-go/blob/master/examples/features/wait_for_ready/main.go#L93
-//}
+// client returns a ready-to-connect billy gRCP instance
+func initClient() (pb.BillyClient, func(), error) {
+	addr := "localhost:" + strconv.Itoa(gRPCPort)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	closeFunc := func() { _ = conn.Close() }
+	client := pb.NewBillyClient(conn)
+	return client, closeFunc, nil
+}
