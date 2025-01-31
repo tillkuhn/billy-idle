@@ -124,9 +124,13 @@ report-default: ## Show report for default db
 .PHONY: run-help
 run-help: ## Run app in help mode
 	go run main.go
+	@echo "----------------------"
 	go run main.go track --help
+	@echo "----------------------"
 	go run main.go report --help
+	@echo "----------------------"
 	go run main.go punch --help
+	@echo "----------------------"
 
 .PHONY: install
 install: clean build ## Install as launchd managed service
