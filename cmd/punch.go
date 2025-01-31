@@ -23,7 +23,8 @@ var punchCmd = &cobra.Command{
 	Short:   "Punch the clock - enter or display actual busy time",
 	Example: "punch 10h5m 2024-11-07",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(0), cobra.MaximumNArgs(3)),
-	Long: `If no args are provided, the current status for all punched records will be shown
+	Long: `The punch sub command allows to enter and view the actual busy time.
+If no args are provided, the current status for all punched records will be shown
 If args are provided, the first argument is considered as the actual duration for the current day.
 If 2nd are is provided, the 2nd arg is considered as the day in YYYY-MM-DD format.
 If the 3rd arg is provided, it is considered to be the planned duration (which defaults to the options value).

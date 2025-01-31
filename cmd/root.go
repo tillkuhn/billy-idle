@@ -22,8 +22,11 @@ var ctxCancel context.CancelFunc
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "billy-idle",
+	// Use is the one-line usage message.
+	Use: "billy-idle",
+	// Short is the short description shown in the 'help' output.
 	Short: "Simple busy / idle time tracker inspired by the ancient article 'Inactivity and Idle Time on OS X'.",
+	// Long is the long message shown in the 'help <this-command>' output.
 	Long: `Simple busy / idle time tracker based on the macOS timer called HIDIdleTime that tracks the last time you interacted with the computer,
 e.g. moved the mouse, typed a key, or interacted with the computer.
 
