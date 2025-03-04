@@ -20,7 +20,7 @@ func FDur(d time.Duration) string {
 		return "0m"
 	}
 	hourStr := ""
-	if d.Hours() > 1 || d.Hours() < -1 {
+	if d.Hours() >= 1 || d.Hours() <= -1 {
 		hourStr = fmt.Sprintf("%dh", int(d.Hours()))
 	}
 	minStr := ""
