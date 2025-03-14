@@ -10,7 +10,7 @@ import (
 )
 
 func Test_RandomTask(t *testing.T) {
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 6; i++ {
 		ta := randomTask()
 		t.Log(t.Name() + ": " + ta) // let's make test output more fun
 		assert.NotEmpty(t, ta)

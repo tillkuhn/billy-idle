@@ -10,6 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/tillkuhn/billy-idle/internal/pb"
 	"google.golang.org/grpc"
@@ -201,8 +204,7 @@ func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg s
 }
 
 func randomTask() string {
-	// r := rand.IntN(3)
-	switch rand.IntN(4) {
+	switch rand.IntN(6) { // numbers will be between 0 and n-1
 	case 0:
 		return fmt.Sprintf("Drinking a %s %s with %s", gofakeit.BeerStyle(), gofakeit.BeerName(), gofakeit.BeerAlcohol())
 	case 1:
@@ -213,6 +215,9 @@ func randomTask() string {
 		return fmt.Sprintf("Building App %s %s in %s", gofakeit.AppName(), gofakeit.AppVersion(), gofakeit.ProgrammingLanguage())
 	case 4:
 		return fmt.Sprintf("Feeding a %s named %s with %s", gofakeit.Animal(), gofakeit.PetName(), gofakeit.MinecraftFood())
+	case 5:
+		hackerVerb := cases.Title(language.English, cases.NoLower).String(gofakeit.HackeringVerb())
+		return fmt.Sprintf("%s a %s %s with %s", hackerVerb, gofakeit.HackerAdjective(), gofakeit.HackerNoun(), gofakeit.HackerAbbreviation())
 	default:
 		return "Doing boring stuff"
 	}
