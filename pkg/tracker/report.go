@@ -62,7 +62,7 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		// headline per day
 		tableBold := tablewriter.Colors{tablewriter.Bold}
 		table := tablewriter.NewWriter(t.opts.Out)
-		table.SetHeader([]string{"🕰", "Time Range", "🐝 Busy Record"})
+		table.SetHeader([]string{"🕰", "Busy Time Range", "🐝 What Billy thinks you did"})
 		table.SetHeaderColor(tableBold, tableBold, tableBold)
 		table.SetBorder(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
