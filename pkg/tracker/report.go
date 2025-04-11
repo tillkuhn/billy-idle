@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,8 +63,8 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 		// headline per day
 		tableBold := tablewriter.Colors{tablewriter.Bold}
 		table := tablewriter.NewWriter(t.opts.Out)
-		table.SetHeader([]string{"🕰", "Busy Time Range", "🐝 What Billy thinks you did"})
-		table.SetHeaderColor(tableBold, tableBold, tableBold)
+		table.SetHeader([]string{"🕰", "Busy Time Range", "Rec", "🐝 What Billy thinks you did"})
+		table.SetHeaderColor(tableBold, tableBold, tableBold, tableBold) // needs to reflect exact number of columns
 		table.SetBorder(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -83,7 +84,8 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 				table.Append([]string{
 					DayTimeIcon(rec.BusyStart),
 					fmt.Sprintf("%s → %s", rec.BusyStart.Format("15:04:05"), to),
-					fmt.Sprintf("Spent %s %s #%d", FDur(rec.Duration()), rec.Task, rec.ID), // rec.Id
+					strconv.Itoa(rec.ID),
+					fmt.Sprintf("Spent %s %s", FDur(rec.Duration()), rec.Task),
 				})
 				spentBusy += rec.Duration()
 			} else {
@@ -100,7 +102,8 @@ func (t *Tracker) Report(ctx context.Context, w io.Writer) error {
 			table.Append([]string{
 				DayTimeIcon(last.BusyStart),
 				fmt.Sprintf("%s → now", last.BusyStart.Format("15:04:05")),
-				fmt.Sprintf("Still busy with %s #%d", last.Task, last.ID), // rec.Id
+				strconv.Itoa(last.ID),
+				fmt.Sprintf("Still busy with %s", last.Task),
 			})
 			if lastDay {
 				spentTotal = time.Since(first.BusyStart)
@@ -126,6 +129,7 @@ func (t *Tracker) ReportDailyFooter(table *tablewriter.Table, spentBusy time.Dur
 	overMax := spentBusy - t.opts.MaxBusy
 	table.SetFooter([]string{"🧮",
 		fmt.Sprintf("%s +break: %s", FDur(spentBusy), FDur((spentBusy + kitKat).Round(time.Minute))),
+		"", // ID Column remains empty in footer
 		fmt.Sprintf("Busy+Idle: %s  Skip(<%v): %d  >Reg(%v): %v  >Max(%s): %v",
 			FDur(spentTotal),                      // total time both busy + idle
 			FDur(t.opts.MinBusy), skippedTooShort, // number of skipped records
@@ -133,7 +137,7 @@ func (t *Tracker) ReportDailyFooter(table *tablewriter.Table, spentBusy time.Dur
 			FDur(t.opts.MaxBusy), FDur(overMax), // over max
 		),
 	})
-	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{})
+	table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{}, tablewriter.Colors{})
 	table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 	table.Render()
 
