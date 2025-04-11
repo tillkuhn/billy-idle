@@ -203,6 +203,12 @@ func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg s
 	return err
 }
 
+// RemoveRecord removes a record from the database
+func (t *Tracker) RemoveRecord(_ context.Context, id int) error {
+	log.Printf("Delete id=#%d called ", id)
+	return nil
+}
+
 func randomTask() string {
 	switch rand.IntN(6) { // numbers will be between 0 and n-1
 	case 0:

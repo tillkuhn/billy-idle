@@ -70,6 +70,10 @@ linters:
       - linters:
           - gochecknoglobals
           - mnd
+        path: cmd/rm.go
+      - linters:
+          - gochecknoglobals
+          - mnd
         path: cmd/report.go
       - linters:
           - gochecknoglobals
