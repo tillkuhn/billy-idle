@@ -109,6 +109,10 @@ run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
 punch: ## Show punch clock report for default db
 	go run main.go --debug punch --env $(DEFAULT_ENV)
 
+.PHONY: rm
+rm: ## Run rm command
+	go run main.go --debug rm 1234
+
 .PHONY: wsp
 wsp: ## Show status using gRPC Client
 	go run main.go --debug wsp --port $(DEV_PORT)
