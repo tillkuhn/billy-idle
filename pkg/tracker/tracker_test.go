@@ -53,6 +53,22 @@ func Test_Update(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func Test_RemoveOK(t *testing.T) {
+	tr, mock := DBMock(t)
+	sql1 := "DELETE FROM track(.*)"
+	mock.ExpectPrepare(sql1)
+	// Error row: https://github.com/DATA-DOG/go-sqlmock/blob/master/rows_test.go#L53
+	mock.ExpectExec(sql1).WithArgs(78).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectPrepare(sql1)
+	mock.ExpectExec(sql1).WithArgs(78).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectClose()
+	err := tr.RemoveRecord(context.Background(), 78)
+	assert.NoError(t, err)
+	// check that the record was removed so next call on same id should return nothing found error
+	err2 := tr.RemoveRecord(context.Background(), 78)
+	assert.ErrorContains(t, err2, "not found")
+}
+
 func Test_mandatoryBreak(t *testing.T) {
 	assert.Equal(t, 0*time.Minute, mandatoryBreak(5*time.Hour))
 	assert.Equal(t, 9*time.Minute, mandatoryBreak(6*time.Hour+9*time.Minute))
