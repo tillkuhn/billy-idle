@@ -3,6 +3,7 @@ package tracker
 import (
 	// provides access to Files embedded in the running Go program.
 	_ "embed"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -18,6 +19,8 @@ import (
 //
 //go:embed db-init.sql
 var initSQL string
+
+var errDb = errors.New("databaseError")
 
 // initDB initializes SQLite DB in local filesystem
 func initDB(opts *Options) (*sqlx.DB, error) {

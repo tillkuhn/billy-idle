@@ -167,14 +167,14 @@ func (t *Tracker) checkpoint(idleMillis int64) {
 
 // newTrackRecord inserts a new tracking records
 func (t *Tracker) newTrackRecord(ctx context.Context, msg string) (int, error) {
-	statement, err := t.db.PrepareContext(ctx, `INSERT INTO track(message,client,task,busy_start) VALUES (?,?,?,?) RETURNING id;`)
+	stmt, err := t.db.PrepareContext(ctx, `INSERT INTO track(message,client,task,busy_start) VALUES (?,?,?,?) RETURNING id;`)
 	if err != nil {
 		return 0, err
 	}
 	var id int
 	// Golang SQL insert row and get returning ID example: https://gt.ist.github.com/miguelmota/d54814683346c4c98cec432cf99506c0
 	task := randomTask()
-	err = statement.QueryRowContext(ctx, msg, t.opts.ClientID, task, time.Now().Round(time.Second)).Scan(&id)
+	err = stmt.QueryRowContext(ctx, msg, t.opts.ClientID, task, time.Now().Round(time.Second)).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -190,11 +190,11 @@ func (t *Tracker) completeTrackRecord(ctx context.Context, id int, msg string) e
 // completeTrackRecord finishes the active record using the provided datetime as period end
 func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
 	// don't use sql ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
-	statement, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
+	stmt, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
 	if err != nil {
 		return err
 	}
-	res, err := statement.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
+	res, err := stmt.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
 	if err != nil {
 		log.Printf("Cannot complete record %d: %v", id, err)
 	}
@@ -204,8 +204,21 @@ func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg s
 }
 
 // RemoveRecord removes a record from the database
-func (t *Tracker) RemoveRecord(_ context.Context, id int) error {
-	log.Printf("Delete id=#%d called ", id)
+func (t *Tracker) RemoveRecord(ctx context.Context, id int) error {
+	stmt, err := t.db.PrepareContext(ctx, `DELETE FROM track WHERE id=(?)`)
+	if err != nil {
+		return err
+	}
+	res, err := stmt.ExecContext(ctx, id)
+	if err != nil {
+		return err
+	}
+	if ra, err := res.RowsAffected(); err != nil {
+		return err
+	} else if ra < 1 {
+		return fmt.Errorf("%w: record %d not found", errDb, id)
+	}
+	log.Printf("Delete id=#%d successfully deleted", id)
 	return nil
 }
 
