@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    See https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html
+    For property List format
+-->
 <plist version="1.0">
 <dict>
    <key>Label</key><string>com.github.tillkuhn.billy-idle</string>
@@ -8,7 +12,7 @@
        <string>$HOME/bin/billy</string>
        <string>track</string>
        <string>--idle</string>
-       <string>10m</string>
+       <string>7m</string>
        <string>--interval</string>
        <string>20s</string>
 
