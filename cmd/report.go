@@ -18,9 +18,10 @@ var reportOpts tracker.Options
 
 // reportCmd represents the report command
 var reportCmd = &cobra.Command{
-	Use:   "report",
-	Short: "Display a report of all logged busy / idle times",
-	Long:  `Generates a report based on the recorded idle and busy times.`,
+	Use:     "report",
+	Aliases: []string{"rep"},
+	Short:   "Display a report of all logged busy / idle times",
+	Long:    `Generates a report based on the recorded idle and busy times.`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		nc, _ := cmd.Flags().GetBool("no-color")
 		if nc {
