@@ -17,6 +17,10 @@ ifneq ($(GIT_TAG),)
 endif
 ifeq ($(OSNAME),Darwin)
   OS = darwin
+  # on MacOS, GOARCH should be amd64, not x86_64 returned by uname -m
+  ifeq ($(ARCH),x86_64)
+	ARCH = amd64
+  endif
 else
   OS = linux
 endif
