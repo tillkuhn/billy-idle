@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"context"
 	// provides access to Files embedded in the running Go program.
 	_ "embed"
 	"errors"
@@ -45,7 +46,7 @@ func initDB(opts *Options) (*sqlx.DB, error) {
 	if opts.DropCreate {
 		dropStmt = "DROP TABLE IF EXISTS track;\n"
 	}
-	if _, err = db.Exec(dropStmt + initSQL); err != nil {
+	if _, err = db.ExecContext(context.Background(), dropStmt+initSQL); err != nil {
 		return nil, err
 	}
 
