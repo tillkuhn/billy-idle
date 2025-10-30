@@ -50,7 +50,7 @@ help: ## Shows the help
 
 # default goreleaser  dist/billy-idle_darwin_arm64/billy
 .PHONY: build-mac
-build-mac: ## build for mac current arch using default goreleaser target path
+build-mac: grpc-gen  ## build for mac current arch using default goreleaser target path
 	GOARCH=$(ARCH) CGO_ENABLED=0 GOOS=darwin \
 	go build -v --ldflags="$(LDFLAGS)" \
 	-o dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY)
