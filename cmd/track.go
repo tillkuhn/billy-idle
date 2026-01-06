@@ -56,7 +56,7 @@ func track(ctx context.Context) {
 	}()
 	// Experimental gRPC server
 	go func() {
-		if err := t.ServeGRCP(); err != nil {
+		if err := t.ServeGRCP(ctx); err != nil {
 			log.Fatal(err)
 		}
 	}()

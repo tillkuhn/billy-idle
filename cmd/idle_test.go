@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"slices"
 	"strconv"
 	"testing"
@@ -27,7 +28,7 @@ func TestIdle(t *testing.T) {
 	}
 	tr := tracker.New(opts)
 	go func() {
-		if err := tr.ServeGRCP(); err != nil {
+		if err := tr.ServeGRCP(context.Background()); err != nil {
 			t.Log(err)
 			t.Fail()
 		}

@@ -2,6 +2,7 @@ package tracker
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -60,8 +61,9 @@ func NewWithDB(opts *Options, db *sqlx.DB) *Tracker {
 }
 
 // ServeGRCP experimental Server for gRCP support
-func (t *Tracker) ServeGRCP() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", t.opts.Port))
+func (t *Tracker) ServeGRCP(ctx context.Context) error {
+	lc := &net.ListenConfig{}
+	lis, err := lc.Listen(ctx, "tcp", fmt.Sprintf(":%d", t.opts.Port))
 	if err != nil {
 		return err
 	}
@@ -92,7 +94,7 @@ func (t *Tracker) Suspend(_ context.Context, str *pb.SuspendRequest) (*pb.Suspen
 	}, nil
 }
 
-// Track starts the idle/Busy tracker in a loop that runs until the context is cancelled
+// Track starts the idle/Busy tracker in a loop that runs until the context is canceled
 func (t *Tracker) Track(ctx context.Context) {
 	t.wg.Add(1)
 	defer t.wg.Done()
@@ -168,6 +170,7 @@ func (t *Tracker) checkpoint(idleMillis int64) {
 // newTrackRecord inserts a new tracking records
 func (t *Tracker) newTrackRecord(ctx context.Context, msg string) (int, error) {
 	stmt, err := t.db.PrepareContext(ctx, `INSERT INTO track(message,client,task,busy_start) VALUES (?,?,?,?) RETURNING id;`)
+	defer func(stmt *sql.Stmt) { _ = stmt.Close() }(stmt)
 	if err != nil {
 		return 0, err
 	}
@@ -189,11 +192,13 @@ func (t *Tracker) completeTrackRecord(ctx context.Context, id int, msg string) e
 
 // completeTrackRecord finishes the active record using the provided datetime as period end
 func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
-	// don't use sql ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
+	// don't use SQL ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
 	stmt, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
 	if err != nil {
 		return err
 	}
+	defer func(stmt *sql.Stmt) { _ = stmt.Close() }(stmt)
+
 	res, err := stmt.ExecContext(ctx, busyEnd.Round(time.Second), msg, id)
 	if err != nil {
 		log.Printf("Cannot complete record %d: %v", id, err)
@@ -209,6 +214,7 @@ func (t *Tracker) RemoveRecord(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
+	defer func(stmt *sql.Stmt) { _ = stmt.Close() }(stmt)
 	res, err := stmt.ExecContext(ctx, id)
 	if err != nil {
 		return err
