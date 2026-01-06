@@ -142,6 +142,51 @@ Global Flags:
   -d, --debug   Debug checkpoints
 ----
 
+== Experimental Grafana Cloud Integration
+
+*Billy Idle* includes an experimental feature to push tracking metrics to Grafana Cloud using InfluxDB Line Protocol. This enables real-time monitoring and visualization of productivity data in Grafana dashboards.
+
+=== Configuration
+
+Add these flags to enable Grafana Cloud integration:
+
+[source,shell]
+----
+--grafana-host=""      # Grafana Hostname (e.g., https://prometheus-prod-xx-prod-eu-west-2.grafana.net)
+--grafana-auth=""      # Grafana Auth in format "username:token"
+----
+
+=== Usage
+
+[source,shell]
+----
+# Development mode with Grafana Cloud
+make run-grafana
+# Expands to:
+go run main.go --debug track --env dev --idle 10s --interval 5s --port 50051 --grafana-host=$GRAFANA_HOST --grafana-auth=$GRAFANA_AUTH
+----
+
+=== Metrics Format
+
+The feature pushes metrics using InfluxDB Line Protocol:
+
+----
+billy_idle,env=dev,client=myclient busy_secs=15,busy_status=true 1736164800000000000
+----
+
+* **Measurement**: `billy_idle`
+* **Tags**: `env` (environment), `client` (client ID)
+* **Fields**: `busy_secs` (current idle time), `busy_status` (busy/idle state)
+* **Timestamp**: Current time
+
+=== Requirements
+
+- Grafana Cloud account with InfluxDB API access
+- Username and API token for authentication
+- Network access to Grafana Cloud endpoints
+
+The feature gracefully degrades - if Grafana configuration is not provided, tracking continues normally without cloud integration.
+
 == Database Support
 
 *Billy Idle* currently only support a local https://gitlab.com/cznic/sqlite[sqlite] database, more precisely `modernc.org/sqlite` which is a cgo-free port of SQLite.
