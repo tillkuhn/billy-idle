@@ -109,6 +109,10 @@ vulncheck: ## Run govulncheck scanner
 run: ## Run app in tracker mode (dev env), add -drop-create to recreate db
 	go run main.go --debug track --env dev --idle 10s --interval 5s --port $(DEV_PORT)
 
+.PHONY: run-grafana
+run-grafana: ## Run app in tracker mode (dev env) with experimental grafana integration
+	go run main.go --debug track --env dev --idle 10s --interval 5s --port $(DEV_PORT) --grafana-host=$(GRAFANA_HOST) --grafana-auth=$(GRAFANA_AUTH)
+
 .PHONY: punch
 punch: ## Show punch clock report for default db
 	go run main.go --debug punch --env $(DEFAULT_ENV)
@@ -148,7 +152,7 @@ install: clean build ## Install as launchd managed service
 		launchctl unload -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist; \
 	fi
 	cp dist/$(APP_NAME)_$(OS)_$(ARCH)/$(BINARY) $(HOME)/bin/$(BINARY)
-	cat agent.plist |envsubst '$$HOME' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+	cat agent.plist |envsubst '$$HOME,$$GRAFANA_HOST,$$GRAFANA_AUTH' > $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
 	launchctl load -w ~/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
 	launchctl list $(LAUNCHD_LABEL) | grep '"PID"'
 	@sleep 1

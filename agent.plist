@@ -18,6 +18,10 @@
 
        <!-- optional -->
        <string>--debug</string>
+       <string>--grafana-host</string>
+       <string>$GRAFANA_HOST</string>
+       <string>--grafana-auth</string>
+       <string>$GRAFANA_AUTH</string>
     </array>
     <key>StandardOutPath</key><string>$HOME/.billy-idle/default/agent.log</string>
     <key>StandardErrorPath</key><string>$HOME/.billy-idle/default/agent.log</string>

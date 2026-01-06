@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tillkuhn/billy-idle/pkg/grafanaconda"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -31,7 +32,7 @@ type Tracker struct {
 	grpcServer *grpc.Server
 	wg         sync.WaitGroup
 	ist        IdleState
-
+	mClient    *grafanaconda.Client
 	// UnimplementedBillyServer must be embedded to have forward-compatible implementations.
 	pb.UnimplementedBillyServer // Tracker implements billy gRPC Server
 }
@@ -48,7 +49,15 @@ func New(opts *Options) *Tracker {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return NewWithDB(opts, db)
+	t := NewWithDB(opts, db)
+	if opts.GrafanaHost != "" {
+		t.mClient = grafanaconda.NewClient(
+			grafanaconda.WithHost(opts.GrafanaHost),
+			grafanaconda.WithAuth(opts.GrafanaAuth),
+			grafanaconda.WithDebug(opts.Debug),
+		)
+	}
+	return t
 }
 
 // NewWithDB returns a new Tracker configured with the given Options and DB, good for testing
@@ -157,6 +166,7 @@ func (t *Tracker) WaitClose() {
 
 // checkpoint print debug info on current state
 func (t *Tracker) checkpoint(idleMillis int64) {
+	t.pushMetrics(idleMillis)
 	if t.opts.Debug {
 		idleD := (time.Duration(idleMillis) * time.Millisecond).Round(time.Second)
 		asInfo := t.ist.String()
@@ -194,6 +204,7 @@ func (t *Tracker) completeTrackRecord(ctx context.Context, id int, msg string) e
 func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg string, busyEnd time.Time) error {
 	// don't use SQL ( busy_end=datetime(CURRENT_TIMESTAMP, 'localtime') ) but set explicitly
 	stmt, err := t.db.PrepareContext(ctx, `UPDATE track set busy_end=(?),message = message ||' '|| (?) WHERE id=(?) and busy_end IS NULL`)
+	defer func(stmt *sql.Stmt) { _ = stmt.Close() }(stmt)
 	if err != nil {
 		return err
 	}
@@ -211,6 +222,7 @@ func (t *Tracker) completeTrackRecordWithTime(ctx context.Context, id int, msg s
 // RemoveRecord removes a record from the database
 func (t *Tracker) RemoveRecord(ctx context.Context, id int) error {
 	stmt, err := t.db.PrepareContext(ctx, `DELETE FROM track WHERE id=(?)`)
+	defer func(stmt *sql.Stmt) { _ = stmt.Close() }(stmt)
 	if err != nil {
 		return err
 	}
@@ -245,6 +257,25 @@ func randomTask() string {
 		return fmt.Sprintf("%s a %s %s with %s", hackerVerb, gofakeit.HackerAdjective(), gofakeit.HackerNoun(), gofakeit.HackerAbbreviation())
 	default:
 		return "Doing boring stuff"
+	}
+}
+
+// pushMetrics pushes current idle/busy metrics to Grafana Cloud (if hostname is configured)
+func (t *Tracker) pushMetrics(idleMillis int64) {
+	if t.mClient == nil {
+		return
+	}
+	m := grafanaconda.Measurement{
+		Measurement: "billy_idle",
+		Tags:        map[string]string{"env": t.opts.Env, "client": t.opts.ClientID},
+		Fields: map[string]interface{}{
+			"busy_secs":   idleMillis / 1000,
+			"busy_status": t.ist.Busy(),
+		},
+		Timestamp: time.Now(),
+	}
+	if err := t.mClient.Push(context.Background(), m); err != nil {
+		log.Printf("⚠️  Failed to push metrics to Grafana Cloud: %v", err)
 	}
 }
 
