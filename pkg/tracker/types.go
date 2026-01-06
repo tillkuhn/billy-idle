@@ -24,6 +24,9 @@ type Options struct {
 	Out           io.Writer
 	// Port for gRPC Communication
 	Port int
+
+	GrafanaHost string
+	GrafanaAuth string
 }
 
 func (o Options) AppDir() string {

@@ -42,6 +42,9 @@ func init() {
 	trackCmd.PersistentFlags().DurationVarP(&trackOpts.CheckInterval, "interval", "i", 2*time.Second, "Interval to check for idle time")
 	trackCmd.PersistentFlags().DurationVarP(&trackOpts.IdleTolerance, "idle", "m", 10*time.Second, "Max tolerated idle time before client enters idle state")
 	trackCmd.PersistentFlags().IntVarP(&trackOpts.Port, "port", "p", 50051, "Port for gRPC Communication")
+	// Experimental: Grafana Cloud InfluxDB Push
+	trackCmd.PersistentFlags().StringVarP(&trackOpts.GrafanaHost, "grafana-host", "", "", "Grafana Hostname")
+	trackCmd.PersistentFlags().StringVarP(&trackOpts.GrafanaAuth, "grafana-auth", "", "", "Grafana Auth user:token")
 }
 
 func track(ctx context.Context) {
