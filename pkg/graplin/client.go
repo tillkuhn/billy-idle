@@ -1,4 +1,5 @@
-package grafanaconda
+// Package graplin provides a client for pushing metrics to Grafana Cloud using InfluxDB Line Protocol.
+package graplin
 
 import (
 	"bytes"

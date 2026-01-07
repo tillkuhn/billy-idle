@@ -1,4 +1,4 @@
-package grafanaconda
+package graplin
 
 import (
 	"context"

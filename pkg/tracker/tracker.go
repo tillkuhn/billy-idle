@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tillkuhn/billy-idle/pkg/grafanaconda"
+	"github.com/tillkuhn/billy-idle/pkg/graplin"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -32,7 +32,7 @@ type Tracker struct {
 	grpcServer *grpc.Server
 	wg         sync.WaitGroup
 	ist        IdleState
-	mClient    *grafanaconda.Client
+	mClient    *graplin.Client
 	// UnimplementedBillyServer must be embedded to have forward-compatible implementations.
 	pb.UnimplementedBillyServer // Tracker implements billy gRPC Server
 }
@@ -51,10 +51,10 @@ func New(opts *Options) *Tracker {
 	}
 	t := NewWithDB(opts, db)
 	if opts.GrafanaHost != "" {
-		t.mClient = grafanaconda.NewClient(
-			grafanaconda.WithHost(opts.GrafanaHost),
-			grafanaconda.WithAuth(opts.GrafanaAuth),
-			grafanaconda.WithDebug(opts.Debug),
+		t.mClient = graplin.NewClient(
+			graplin.WithHost(opts.GrafanaHost),
+			graplin.WithAuth(opts.GrafanaAuth),
+			graplin.WithDebug(opts.Debug),
 		)
 	}
 	return t
@@ -265,7 +265,7 @@ func (t *Tracker) pushMetrics(idleMillis int64) {
 	if t.mClient == nil {
 		return
 	}
-	m := grafanaconda.Measurement{
+	m := graplin.Measurement{
 		Measurement: "billy_idle",
 		Tags:        map[string]string{"env": t.opts.Env, "client": t.opts.ClientID},
 		Fields: map[string]interface{}{
