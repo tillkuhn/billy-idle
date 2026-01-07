@@ -71,6 +71,7 @@ clean: ## Clean output directory
 	rm -rf dist/
 
 lint: ## Lint go code
+	@echo Running golangci-lint run --fix
 	@go fmt ./...
 	@golangci-lint run --fix
 

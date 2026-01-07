@@ -16,6 +16,8 @@ var (
 	ErrRequestFailed = errors.New("request failed")
 )
 
+const httpClientTimeout = 5 * time.Second
+
 // Measurement represents a single InfluxDB Line Protocol measurement
 type Measurement struct {
 	// Measurement (Required) The measurement name. InfluxDB accepts one measurement per point. Measurement names are case-sensitive and subject to naming restrictions.
@@ -94,7 +96,9 @@ type Client struct {
 // with various options(Functional Options Pattern)
 func NewClient(options ...func(client *Client)) *Client {
 	client := &Client{}
-	client.httpClient = &http.Client{}
+	client.httpClient = &http.Client{
+		Timeout: httpClientTimeout,
+	}
 	for _, o := range options {
 		o(client)
 	}
