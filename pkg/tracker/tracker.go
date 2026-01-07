@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tillkuhn/billy-idle/pkg/graplin"
+	"github.com/tillkuhn/graplin/pkg/graplin"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
