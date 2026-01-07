@@ -15,12 +15,13 @@
 #    • building  binary=dist/rubin_darwin_arm64/app
 #    • building  binary=dist/rubin_darwin_amd64_v1/app
 #    • building  binary=dist/rubin_linux_arm64/app
+version: 2
 before:
   hooks:
     - go mod tidy
 
 gomod:
-  proxy: true
+  proxy: false
 
 # Fields: https://goreleaser.com/customization/builds/
 # Multiple binaries: https://github.com/orgs/goreleaser/discussions/3169#discussioncomment-2989473

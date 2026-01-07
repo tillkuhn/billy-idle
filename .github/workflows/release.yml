@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
-        
+
       - name: gRPC gen
         run: |
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
