@@ -1,4 +1,3 @@
-// Package graplin provides a client for pushing metrics to Grafana Cloud using InfluxDB Line Protocol.
 package graplin
 
 import (
@@ -82,7 +81,7 @@ func (m *Measurement) formatFieldValue(key string, value interface{}) string {
 	}
 }
 
-// Client is a Grafana Cloud InfluxDB Line Protocol Pusher client
+// Client represents the Grafana Cloud InfluxDB Line Protocol Pusher client backed by HTTP Client
 type Client struct {
 	endpoint   string
 	user       string
@@ -92,7 +91,7 @@ type Client struct {
 }
 
 // NewClient returns a new client instance that can be configured
-// with the Functional Options Pattern
+// with various options(Functional Options Pattern)
 func NewClient(options ...func(client *Client)) *Client {
 	client := &Client{}
 	client.httpClient = &http.Client{}
@@ -102,6 +101,7 @@ func NewClient(options ...func(client *Client)) *Client {
 	return client
 }
 
+// WithHost sets the Grafana Cloud InfluxDB Line Protocol endpoint host (without path)
 func WithHost(host string) func(*Client) {
 	return func(c *Client) {
 		if host != "" {
@@ -111,6 +111,7 @@ func WithHost(host string) func(*Client) {
 	}
 }
 
+// WithAuth sets the authentication credentials for Grafana Cloud (user:token format)
 func WithAuth(auth string) func(*Client) {
 	return func(c *Client) {
 		if strings.Contains(auth, ":") {
@@ -122,29 +123,19 @@ func WithAuth(auth string) func(*Client) {
 	}
 }
 
+// WithDebug enables or disables debug mode for the client (more logging)
 func WithDebug(debugMode bool) func(*Client) {
 	return func(c *Client) {
 		c.debug = debugMode
 	}
 }
 
-// Push sends the given payload as
-// InfluxDB line protocol to the configured Grafana Cloud
-// https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/
-//
-// Example Endpoint:
-//
-//	https://prometheus-prod-xx-prod-eu-west-2.grafana.net/api/prom/push/influx/write
-//
-// Example Payload:
-//
-//	 <measurement>[,<tag_key>=<tag_value>[,<tag_key>=<tag_value>]] <field_key>=<field_value>[,<field_key>=<field_value>] [<timestamp>]
-//		myMeasurement,tag1=value1,tag2=value2 fieldKey="fieldValue" 1556813561098000000
-func (c *Client) Push(ctx context.Context, measurement Measurement) error {
+// Push sends the given payload formatted  as InfluxDB line protocol to the configured Grafana Cloud Endpoint
+func (c *Client) Push(ctx context.Context, m Measurement) error {
 	if c.debug {
-		log.Printf("📈 Pushing %s metrics %s: %s", measurement.Measurement, c.endpoint, measurement.String())
+		log.Printf("📈 Pushing %s metrics %s: %s", m.Measurement, c.endpoint, m.String())
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", c.endpoint, bytes.NewBuffer([]byte(measurement.String())))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.endpoint, bytes.NewBuffer([]byte(m.String())))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -162,7 +153,7 @@ func (c *Client) Push(ctx context.Context, measurement Measurement) error {
 		return fmt.Errorf("%w with status code: %d", ErrRequestFailed, resp.StatusCode)
 	}
 	if c.debug {
-		log.Printf("📈 %s metrics successfully pushed with status %d", measurement.Measurement, resp.StatusCode)
+		log.Printf("📈 %s metrics successfully pushed with status %d", m.Measurement, resp.StatusCode)
 	}
 	return nil
 }
