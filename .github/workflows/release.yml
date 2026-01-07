@@ -43,8 +43,8 @@ jobs:
       # https://stackoverflow.com/a/61974058/4292075
       - name: Make sure new version is reflected on https://pkg.go.dev/github.com/tillkuhn/billy-idle
         run: |
-          echo "Force update of https://pkg.go.dev/github.com/${{GITHUB_REPOSITORY}} with new tag ${{ github.head_ref || github.ref_name }}"
-          curl -isS https://sum.golang.org/lookup/github.com/${{GITHUB_REPOSITORY}}@${{ github.head_ref || github.ref_name }}
+          echo "Force update of https://pkg.go.dev/github.com/$GITHUB_REPOSITORY with new tag ${{ github.head_ref || github.ref_name }}"
+          curl -isS https://sum.golang.org/lookup/github.com/$GITHUB_REPOSITORY@${{ github.head_ref || github.ref_name }}
 
 
 #- name: Move goreleaser generated binaries to a predictable platform path for docker build
