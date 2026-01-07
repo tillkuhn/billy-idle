@@ -1,6 +1,6 @@
 module github.com/tillkuhn/billy-idle
 
-go 1.24.1
+go 1.24.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -12,6 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
+	github.com/tillkuhn/graplin v0.0.1
 	golang.org/x/text v0.24.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.8
