@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -90,6 +91,7 @@ type Client struct {
 	token      string
 	debug      bool
 	httpClient *http.Client
+	errorCount int64
 }
 
 // NewClient returns a new client instance that can be configured
@@ -149,7 +151,8 @@ func (c *Client) Push(ctx context.Context, m Measurement) error {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		atomic.AddInt64(&c.errorCount, 1)
+		return fmt.Errorf("failed to send request (accumulated error count %d): %w", c.errorCount, err)
 	}
 	defer func(Body io.ReadCloser) { _ = Body.Close() }(resp.Body)
 
@@ -160,4 +163,9 @@ func (c *Client) Push(ctx context.Context, m Measurement) error {
 		log.Printf("📈 %s metrics successfully pushed with status %d", m.Measurement, resp.StatusCode)
 	}
 	return nil
+}
+
+// ErrorCount returns the number of HTTP request errors encountered
+func (c *Client) ErrorCount() int64 {
+	return atomic.LoadInt64(&c.errorCount)
 }

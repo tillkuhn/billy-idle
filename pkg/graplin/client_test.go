@@ -237,3 +237,41 @@ func TestClient_Push_Error(t *testing.T) {
 		t.Errorf("Expected status code error, got: %v", err)
 	}
 }
+
+func TestClient_ErrorCount(t *testing.T) {
+	measurement := Measurement{
+		Measurement: "test",
+		Fields: map[string]interface{}{
+			"value": 42,
+		},
+	}
+
+	client := NewClient(WithHost("http://invalid-host-that-does-not-exist.example.com"), WithAuth("user:token"))
+
+	// Initially error count should be 0
+	if count := client.ErrorCount(); count != 0 {
+		t.Errorf("Expected initial error count to be 0, got %d", count)
+	}
+
+	// Make a request that will fail
+	err := client.Push(context.Background(), measurement)
+	if err == nil {
+		t.Error("Expected Push() to return error due to invalid host")
+	}
+
+	// Error count should now be 1
+	if count := client.ErrorCount(); count != 1 {
+		t.Errorf("Expected error count to be 1 after failed request, got %d", count)
+	}
+
+	// Make another failing request
+	err = client.Push(context.Background(), measurement)
+	if err == nil {
+		t.Error("Expected Push() to return error due to invalid host")
+	}
+
+	// Error count should now be 2
+	if count := client.ErrorCount(); count != 2 {
+		t.Errorf("Expected error count to be 2 after second failed request, got %d", count)
+	}
+}

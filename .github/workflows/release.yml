@@ -19,6 +19,16 @@ jobs:
       # Use go-releaser to build binaries outside docker
       - name: Set up Go
         uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: gRPC gen
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          protoc --go_out=. --go_opt=paths=source_relative \
+             --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+            internal/pb/billy.proto
 
       - name: Run GoReleaser to build and release binaries (only once on linux/amd64)
         uses: goreleaser/goreleaser-action@v6
@@ -30,7 +40,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      #- name: Move goreleaser generated binaries to a predictable platform path for docker build
+      # https://stackoverflow.com/a/61974058/4292075
+      - name: Make sure new version is reflected on https://pkg.go.dev/github.com/tillkuhn/billy-idle
+        run: |
+          echo "Force update of https://pkg.go.dev/github.com/${{GITHUB_REPOSITORY}} with new tag ${{ github.head_ref || github.ref_name }}"
+          curl -isS https://sum.golang.org/lookup/github.com/${{GITHUB_REPOSITORY}}@${{ github.head_ref || github.ref_name }}
+
+
+#- name: Move goreleaser generated binaries to a predictable platform path for docker build
         # use target subdirectory app/${{ matrix.platform }}/, which is passed as build arg to docker build,
         # copy platform specific binary in actual image (the other one was built in vain, but it's fast :-))
         # see also https://goreleaser.com/customization/builds/#why-is-there-a-_v1-suffix-on-amd64-builds
@@ -52,7 +69,7 @@ jobs:
 #          if-no-files-found: error
 #          retention-days: 1
 
-      # https://github.com/marketplace/actions/delete-older-releases
+      # https://github.com/marketplace/actions/delete-older-releases (no longer maintained, but still works)
       - name: Delete old released binaries
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
