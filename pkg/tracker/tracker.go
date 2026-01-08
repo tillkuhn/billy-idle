@@ -166,15 +166,43 @@ func (t *Tracker) WaitClose() {
 
 // checkpoint print debug info on current state
 func (t *Tracker) checkpoint(idleMillis int64) {
-	t.pushMetrics(idleMillis)
+	idleD := (time.Duration(idleMillis) * time.Millisecond).Round(time.Second)
+	t.pushMetrics(idleD)
 	if t.opts.Debug {
-		idleD := (time.Duration(idleMillis) * time.Millisecond).Round(time.Second)
 		asInfo := t.ist.String()
 		if t.ist.Busy() {
 			asInfo = fmt.Sprintf("%s idleSwitchIn=%v", asInfo, t.opts.IdleTolerance-idleD)
 		}
 		log.Printf("%s Checkpoint idleTime=%v %s", t.ist.Icon(), idleD, asInfo)
 	}
+}
+
+// pushMetrics pushes current idle/busy metrics to Grafana Cloud (if hostname is configured)
+func (t *Tracker) pushMetrics(idleDuration time.Duration) {
+	if t.mClient == nil {
+		return
+	}
+	// reduce frequency of external pushes to at most once per minute to avoid rate limiting
+	if time.Since(t.ist.lastPush) < (1 * time.Minute) {
+		return
+	}
+	var busy float64
+	if t.ist.Busy() {
+		busy = 1.0
+	}
+	m := graplin.Measurement{
+		Measurement: "billy_idle",
+		Tags:        map[string]string{"env": t.opts.Env, "client": t.opts.ClientID},
+		Fields: map[string]interface{}{
+			"idle_secs":   idleDuration.Seconds(),
+			"busy_status": busy,
+		},
+		Timestamp: time.Now(),
+	}
+	if err := t.mClient.Push(context.Background(), m); err != nil {
+		log.Printf("⚠️  Failed to push metrics to Grafana Cloud: %v", err)
+	}
+	t.ist.lastPush = time.Now() // deliberate: also update on error to avoid flooding
 }
 
 // newTrackRecord inserts a new tracking records
@@ -257,25 +285,6 @@ func randomTask() string {
 		return fmt.Sprintf("%s a %s %s with %s", hackerVerb, gofakeit.HackerAdjective(), gofakeit.HackerNoun(), gofakeit.HackerAbbreviation())
 	default:
 		return "Doing boring stuff"
-	}
-}
-
-// pushMetrics pushes current idle/busy metrics to Grafana Cloud (if hostname is configured)
-func (t *Tracker) pushMetrics(idleMillis int64) {
-	if t.mClient == nil {
-		return
-	}
-	m := graplin.Measurement{
-		Measurement: "billy_idle",
-		Tags:        map[string]string{"env": t.opts.Env, "client": t.opts.ClientID},
-		Fields: map[string]interface{}{
-			"busy_secs":   idleMillis / 1000,
-			"busy_status": t.ist.Busy(),
-		},
-		Timestamp: time.Now(),
-	}
-	if err := t.mClient.Push(context.Background(), m); err != nil {
-		log.Printf("⚠️  Failed to push metrics to Grafana Cloud: %v", err)
 	}
 }
 

@@ -72,6 +72,8 @@ type IdleState struct {
 	idle bool
 	// lastCheck holds the timestamp when the last idle check took place
 	lastCheck time.Time
+	// lastPush holds the timestamp when the last status was pushed to the metrics service if enabled (e.g. Grafana)
+	lastPush time.Time
 	// lastSwitch holds the timestamp when state last switch from idle to busy or vice versa
 	lastSwitch time.Time
 }
