@@ -186,9 +186,9 @@ func (t *Tracker) pushMetrics(idleDuration time.Duration) {
 	if time.Since(t.ist.lastPush) < (1 * time.Minute) {
 		return
 	}
-	var busy float64
+	var busy int
 	if t.ist.Busy() {
-		busy = 1.0
+		busy = 1
 	}
 	m := graplin.Measurement{
 		Measurement: "billy_idle",

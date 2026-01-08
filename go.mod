@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/tillkuhn/graplin v0.0.1
+	github.com/tillkuhn/graplin v0.0.2
 	golang.org/x/text v0.32.0
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
