@@ -39,7 +39,8 @@ func init() {
 	reportCmd.PersistentFlags().StringVarP(&reportOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
 	reportCmd.PersistentFlags().DurationVar(&reportOpts.MinBusy, "min-busy", 5*time.Minute, "Minimum time for a busy record to count for the report")
 	reportCmd.PersistentFlags().DurationVar(&reportOpts.MaxBusy, "max-busy", 10*time.Hour, "Max allowed time busy period per day (w/o breaks), report only")
-	reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
+	// reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
+	reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", 6*time.Hour+6*time.Minute, "Regular busy period per day (w/o breaks), report only")
 }
 
 func run(ctx context.Context) {
