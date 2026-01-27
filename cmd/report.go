@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/tillkuhn/billy-idle/internal/defaults"
 
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
