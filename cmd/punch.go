@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/tillkuhn/billy-idle/internal"
+	"github.com/tillkuhn/billy-idle/internal/defaults"
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
@@ -49,7 +49,7 @@ func init() {
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.Env, "env", "e", defaultEnv(), "Environment")
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
 	punchCmd.PersistentFlags().StringVar(&punchNote, "note", "", "Optional note that will be attached to the punch record")
-	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", internal.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
+	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", defaults.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
 }
 
 // punchCreate creates a new punch record for a particular day

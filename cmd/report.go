@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/tillkuhn/billy-idle/internal/defaults"
 
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 
 	"github.com/spf13/cobra"
-	"github.com/tillkuhn/billy-idle/internal"
 )
 
 // reportOpts represents options to configure the report subcommand
@@ -41,7 +41,7 @@ func init() {
 	reportCmd.PersistentFlags().DurationVar(&reportOpts.MinBusy, "min-busy", 5*time.Minute, "Minimum time for a busy record to count for the report")
 	reportCmd.PersistentFlags().DurationVar(&reportOpts.MaxBusy, "max-busy", 10*time.Hour, "Max allowed time busy period per day (w/o breaks), report only")
 	// reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", 7*time.Hour+48*time.Minute, "Regular busy period per day (w/o breaks), report only")
-	reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", internal.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
+	reportCmd.PersistentFlags().DurationVar(&reportOpts.RegBusy, "reg-busy", defaults.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
 }
 
 func run(ctx context.Context) {
