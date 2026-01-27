@@ -33,7 +33,9 @@ jobs:
             internal/pb/billy.proto
 
       - name: Build
-        run: go build -v ./...
+        run: |
+          go mod tidy
+          go build -v ./...
 
       - name: Test
         run: go test -v ./...
