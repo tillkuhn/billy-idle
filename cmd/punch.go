@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/tillkuhn/billy-idle/internal/defaults"
 	"github.com/tillkuhn/billy-idle/pkg/tracker"
 )
 
