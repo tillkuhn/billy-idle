@@ -92,7 +92,7 @@ func punchCreate(ctx context.Context, args []string) error {
 		}
 	}
 
-	return t.UpsertPunchRecordWithPlannedDuration(ctx, dur, day, plannedDur)
+	return t.UpsertPunchRecordWithPlannedDuration(ctx, dur, day, plannedDur, punchNote)
 }
 
 // punchReport displays the current punch report

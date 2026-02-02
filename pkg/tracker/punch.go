@@ -28,8 +28,8 @@ func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
 
 	table := tablewriter.NewWriter(t.opts.Out)
 	bold := tablewriter.Colors{tablewriter.Bold}
-	table.SetHeader([]string{"CW", "📅 Date", "Weekday", "🐝 Busy", "⏲️  Plan", "🕰 Overtime"})
-	table.SetHeaderColor(bold, bold, bold, bold, bold, bold)
+	table.SetHeader([]string{"CW", "📅 Date", "Weekday", "🐝 Busy", "⏲️  Plan", "🕰 Overtime", "🗒️ Notes"})
+	table.SetHeaderColor(bold, bold, bold, bold, bold, bold, bold)
 	table.SetBorder(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -43,7 +43,7 @@ func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
 		// handle calendar week, if it changes during the report, print an empty line
 		_, week := r.Day.ISOWeek() // week ranges from 1 to 53
 		if curWeek > 0 && curWeek != week {
-			table.Append([]string{"", "", "", "", "", ""})
+			table.Append([]string{"", "", "", "", "", "", ""})
 		}
 		curWeek = week
 
@@ -54,6 +54,7 @@ func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
 			FDur(spentDay),
 			FDur(plannedDay),
 			FDur(spentDay - plannedDay),
+			r.Note,
 		})
 		spentBusyTotal += spentDay
 		plannedBusyTotal += plannedDay
@@ -70,9 +71,10 @@ func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
 		FDur(spentBusyTotal),
 		FDur(plannedBusyTotal),
 		FDur(overtime),
+		"",
 	}) // Add Footer
 	table.SetFooterColor(tablewriter.Colors{}, bold, bold,
-		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, bold)
+		tablewriter.Colors{tablewriter.FgHiGreenColor}, tablewriter.Colors{}, bold, bold)
 	table.Render()
 
 	color.Set(color.FgGreen)
@@ -81,29 +83,30 @@ func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
 }
 
 // UpsertPunchRecord same ad Updates or inserts a punch record using the default planned duration (from Options)
-func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Duration, day time.Time) error {
-	return t.UpsertPunchRecordWithPlannedDuration(ctx, busyDuration, day, t.opts.RegBusy)
+func (t *Tracker) UpsertPunchRecord(ctx context.Context, busyDuration time.Duration, day time.Time, note string) error {
+	return t.UpsertPunchRecordWithPlannedDuration(ctx, busyDuration, day, t.opts.RegBusy, note)
 }
 
 // UpsertPunchRecordWithPlannedDuration Updates or inserts a punch record into the database based on whether it already exists.
-func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busyDuration time.Duration, day time.Time, plannedDuration time.Duration) error {
+func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busyDuration time.Duration,
+	day time.Time, plannedDuration time.Duration, note string) error {
 	uQuery := `UPDATE ` + tablePunch + `
-			   SET busy_secs=$2,client=$3,planned_secs=$4
+			   SET busy_secs=$2, client=$3, planned_secs=$4, note=$5
                WHERE day=$1`
 	day = TruncateDay(day) // https://stackoverflow.com/a/38516536/4292075
-	uRes, err := t.db.ExecContext(ctx, uQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedDuration.Seconds())
+	uRes, err := t.db.ExecContext(ctx, uQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedDuration.Seconds(), note)
 	if err != nil {
 		return errors.Wrap(err, "unable to update "+tablePunch+" table")
 	}
 	if updated, _ := uRes.RowsAffected(); updated > 0 {
-		log.Printf("🥫 Updated existing busy record for day %v duration %v", day, busyDuration)
+		log.Printf("🥫 Updated existing busy record for day %v duration %v note %s", day, busyDuration, note)
 		return nil // record was already present, insert not required
 	}
 
 	// No update - let's insert a new row
-	iQuery := `INSERT ` + `INTO ` + tablePunch + ` (day,busy_secs,client,planned_secs) VALUES ($1,$2,$3,$4) RETURNING id`
+	iQuery := `INSERT ` + `INTO ` + tablePunch + ` (day,busy_secs,client,planned_secs,note) VALUES ($1,$2,$3,$4,$5) RETURNING id`
 	var id int
-	if err := t.db.QueryRowContext(ctx, iQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedDuration.Seconds()).Scan(&id); err != nil {
+	if err := t.db.QueryRowContext(ctx, iQuery, day, busyDuration.Seconds(), t.opts.ClientID, plannedDuration.Seconds(), note).Scan(&id); err != nil {
 		return errors.Wrap(err, "unable to insert new record in busy table")
 	}
 	log.Printf("🥫 New busy record for day %v duration %v created with id=%d", day, busyDuration, id)
@@ -115,7 +118,8 @@ func (t *Tracker) PunchRecords(ctx context.Context, monthOffset int) ([]PunchRec
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	// current month: select * from punch where substr(day, 6, 2) = strftime('%m', 'now')
 	// strftime uses current month minus monthOffset month as reference date
-	query := `SELECT day,busy_secs,planned_secs ` +
+	// COALESCE hack: avoid null notes (cannot be reflected by a string), return empty string instead
+	query := `SELECT day,busy_secs,planned_secs,COALESCE(NULLIF(note,''),'') AS note ` +
 		`FROM ` + tablePunch + ` WHERE substr(day, 0, 8) = strftime('%Y-%m', 'now', '-` + strconv.Itoa(monthOffset) + ` month') ` +
 		`ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found

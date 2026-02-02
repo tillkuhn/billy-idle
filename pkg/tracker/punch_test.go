@@ -15,9 +15,9 @@ func Test_UpsertPunchUpdate(t *testing.T) {
 	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
-	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds(), "just a test note").
 		WillReturnResult(sqlmock.NewResult(0, 88))
-	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day)
+	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day, "just a test note")
 	assert.NoError(t, err)
 }
 
@@ -27,9 +27,9 @@ func Test_UpsertPunchUpdateWithPlanned(t *testing.T) {
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
 	planned := time.Second * 7200
-	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", planned.Seconds()).
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", planned.Seconds(), "test with planned duration").
 		WillReturnResult(sqlmock.NewResult(0, 88))
-	err := tracker.UpsertPunchRecordWithPlannedDuration(context.Background(), time.Second*3600, day, planned)
+	err := tracker.UpsertPunchRecordWithPlannedDuration(context.Background(), time.Second*3600, day, planned, "test with planned duration")
 	assert.NoError(t, err)
 }
 
@@ -38,13 +38,13 @@ func Test_UpsertPunchInsert(t *testing.T) {
 	day := TruncateDay(time.Now())
 	sql1 := wildcardStatement("UPDATE " + tablePunch + " SET")
 	// mock.ExpectPrepare(sql1)
-	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
+	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds(), "").
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery("INSERT "+"INTO "+tablePunch).
-		WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
+		WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds(), "").
 		WillReturnRows(mock.NewRows([]string{"id"}).
 			AddRow("44"))
-	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day)
+	err := tracker.UpsertPunchRecord(context.Background(), time.Second*3600, day, "")
 	assert.NoError(t, err)
 }
 
