@@ -40,7 +40,7 @@ func Test_UpsertPunchInsert(t *testing.T) {
 	// mock.ExpectPrepare(sql1)
 	mock.ExpectExec(sql1).WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery("INSERT INTO "+tablePunch).
+	mock.ExpectQuery("INSERT "+"INTO "+tablePunch).
 		WithArgs(day, float64(3600), "test", tracker.opts.RegBusy.Seconds()).
 		WillReturnRows(mock.NewRows([]string{"id"}).
 			AddRow("44"))
@@ -59,7 +59,7 @@ func Test_SelectPunch(t *testing.T) {
 				AddRow(today, 7200, 28080),
 		)
 	mock.ExpectClose()
-	recs, err := tr.PunchRecords(context.Background())
+	recs, err := tr.PunchRecords(context.Background(), 0)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(recs))
 }
@@ -79,7 +79,7 @@ func Test_PunchReport(t *testing.T) {
 				AddRow(day, 7200, 28080),
 		)
 	mock.ExpectClose()
-	err := tr.PunchReport(context.Background())
+	err := tr.PunchReport(context.Background(), 0)
 	assert.NoError(t, err)
 	assert.Contains(t, output.String(), day.Weekday().String())
 }

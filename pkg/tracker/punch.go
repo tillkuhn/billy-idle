@@ -19,8 +19,8 @@ const (
 )
 
 // PunchReport displays the current punch report table layout
-func (t *Tracker) PunchReport(ctx context.Context) error {
-	recs, err := t.PunchRecords(ctx)
+func (t *Tracker) PunchReport(ctx context.Context, monthOffset int) error {
+	recs, err := t.PunchRecords(ctx, monthOffset)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busy
 		return errors.Wrap(err, "unable to update "+tablePunch+" table")
 	}
 	if updated, _ := uRes.RowsAffected(); updated > 0 {
-		log.Printf("🥫 Updated existing busy record for day %v duraction %v", day, busyDuration)
+		log.Printf("🥫 Updated existing busy record for day %v duration %v", day, busyDuration)
 		return nil // record was already present, insert not required
 	}
 
@@ -111,11 +111,12 @@ func (t *Tracker) UpsertPunchRecordWithPlannedDuration(ctx context.Context, busy
 }
 
 // PunchRecords retried existing punch records for the current month
-func (t *Tracker) PunchRecords(ctx context.Context) ([]PunchRecord, error) {
+func (t *Tracker) PunchRecords(ctx context.Context, monthOffset int) ([]PunchRecord, error) {
 	// select sum(ROUND((JULIANDAY(busy_end) - JULIANDAY(busy_start)) * 86400)) || ' secs' AS total from track
 	// current month: select * from punch where substr(day, 6, 2) = strftime('%m', 'now')
+	// strftime uses current month minus monthOffset month as reference date
 	query := `SELECT day,busy_secs,planned_secs ` +
-		`FROM ` + tablePunch + ` WHERE substr(day, 0, 8) = strftime('%Y-%m', 'now') ` +
+		`FROM ` + tablePunch + ` WHERE substr(day, 0, 8) = strftime('%Y-%m', 'now', '-` + strconv.Itoa(monthOffset) + ` month') ` +
 		`ORDER BY DAY` // WHERE busy_start >= DATE('now', '-7 days') ORDER BY busy_start LIMIT 500`
 	// We could use get since we expect a single result, but this would return an error if nothing is found
 	// which is a likely use case

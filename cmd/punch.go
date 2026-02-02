@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	punchOpts tracker.Options
-	punchNote string
+	punchOpts        tracker.Options
+	punchNote        string
+	punchMonthOffset int
 )
 
 var shortDate = regexp.MustCompile(`^\d+-\d+$`)
@@ -40,7 +41,7 @@ punch 2h5m 2024-12-24 3h54m`,
 		}
 		punchOpts.Out = rootCmd.OutOrStdout()
 		t := tracker.New(&punchOpts)
-		return t.PunchReport(cmd.Context()) // always show current report, even in create mode
+		return t.PunchReport(cmd.Context(), punchMonthOffset) // always show current report, even in create mode
 	},
 }
 
@@ -50,6 +51,7 @@ func init() {
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
 	punchCmd.PersistentFlags().StringVar(&punchNote, "note", "", "Optional note that will be attached to the punch record")
 	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", defaults.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
+	punchCmd.PersistentFlags().IntVar(&punchMonthOffset, "month-offset", 0, "Default month offset for report display (e.g. -1 for last month), defaults to 0 (current month)")
 }
 
 // punchCreate creates a new punch record for a particular day
