@@ -49,9 +49,9 @@ func init() {
 	rootCmd.AddCommand(punchCmd)
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.Env, "env", "e", defaultEnv(), "Environment")
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
-	punchCmd.PersistentFlags().StringVar(&punchNote, "note", "", "Optional note that will be attached to the punch record")
+	punchCmd.PersistentFlags().StringVarP(&punchNote, "note", "n", "", "Optional note that will be attached to the punch record")
 	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", defaults.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
-	punchCmd.PersistentFlags().IntVar(&punchMonthOffset, "month-offset", 0, "Default month offset for report display (e.g. -1 for last month), defaults to 0 (current month)")
+	punchCmd.PersistentFlags().IntVarP(&punchMonthOffset, "month-offset", "m", 0, "Default month offset for report display (e.g. -1 for last month), defaults to 0 (current month)")
 }
 
 // punchCreate creates a new punch record for a particular day
