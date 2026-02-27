@@ -27,12 +27,23 @@ var punchCmd = &cobra.Command{
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(0), cobra.MaximumNArgs(3)),
 	Long: `The punch sub command allows to enter and view the actual busy time.
 If no args are provided, the current status for all punched records will be shown
-If args are provided, the first argument is considered as the actual duration for the current day.
-If 2nd are is provided, the 2nd arg is considered as the day in YYYY-MM-DD format.
-If the 3rd arg is provided, it is considered to be the planned duration (which defaults to the options value).
-The following examples records 2 hours and 5m for Dec. 24th 2024 with a planned time of 3hours and 54m.  
+If args are provided, the first argument is considered as the actual working duration for the current day.
+If 2nd are is provided, the 2nd arg is considered as the "punch-day" in YYYY-MM-DD format (if YYYY is omitted, current year is assumed).
+If the 3rd arg is provided, it is considered as the value of the planned duration, otherwise the options default is used.
 
-punch 2h5m 2024-12-24 3h54m`,
+The following examples records 2 hours and 5m for Dec. 24th 2026 with a planned time of 3hours and 54m:  
+
+billy punch 2h5m 2026-12-24 3h54m
+
+This punches 6hours for the 24th of December in the current year:
+
+billy punch 6h 12-24
+
+This shows the punch report for the previous month:
+
+billy punch -m 1
+
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			if err := punchCreate(cmd.Context(), args); err != nil {
@@ -51,7 +62,7 @@ func init() {
 	punchCmd.PersistentFlags().StringVarP(&punchOpts.AppRoot, "app-root", "a", defaultAppRoot(), "App Directory e.g. for SQLite DB (defaults to $HOME/.billy-idle/<env>")
 	punchCmd.PersistentFlags().StringVarP(&punchNote, "note", "n", "", "Optional note that will be attached to the punch record")
 	punchCmd.PersistentFlags().DurationVar(&punchOpts.RegBusy, "reg-busy", defaults.DefaultRegBusyDuration, "Regular busy period per day (w/o breaks), report only")
-	punchCmd.PersistentFlags().IntVarP(&punchMonthOffset, "month-offset", "m", 0, "Default month offset for report display (e.g. -1 for last month), defaults to 0 (current month)")
+	punchCmd.PersistentFlags().IntVarP(&punchMonthOffset, "month-offset", "m", 0, "Default month offset for report display (e.g. 1 for previous month or 2 for two month ago), defaults to 0 (current month)")
 }
 
 // punchCreate creates a new punch record for a particular day
